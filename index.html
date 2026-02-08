@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Global SDR Performance Analysis — Q1 FY26</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif; background: #fff; color: #0f172a; padding: 28px; line-height: 1.5; }
+  .container { max-width: 1060px; margin: 0 auto; }
+  .eyebrow { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  h1 { font-size: 24px; font-weight: 700; margin: 4px 0 2px; }
+  .subtitle { font-size: 13px; color: #64748b; margin-bottom: 24px; }
+
+  /* Cards row */
+  .cards { display: grid; grid-template-columns: 1.2fr repeat(4, 1fr); gap: 10px; margin-bottom: 20px; }
+  .card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; }
+  .card-label { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .card-value { font-size: 22px; font-weight: 700; margin-top: 2px; }
+  .card-sub { font-size: 11px; color: #94a3b8; }
+  .card-region { border-left-width: 4px; border-left-style: solid; }
+
+  /* Distribution bar */
+  .distro { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; padding: 10px 16px; background: #f8fafc; border-radius: 8px; border: 1px solid #e2e8f0; margin-bottom: 24px; font-size: 12px; }
+  .distro .sep { color: #e2e8f0; }
+  .distro .right { margin-left: auto; color: #94a3b8; }
+
+  /* Section */
+  .section { margin-bottom: 28px; }
+  .section-head { border-left: 4px solid; padding-left: 12px; margin-bottom: 12px; }
+  .section-head h2 { font-size: 16px; font-weight: 700; }
+  .section-head p { font-size: 12px; color: #64748b; margin-top: 2px; }
+
+  /* Buttons */
+  .btn-group { display: flex; gap: 3px; }
+  .btn-group + .btn-group { margin-left: 12px; }
+  .controls { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+  .btn { font-size: 10px; font-weight: 500; border: 1px solid #e2e8f0; border-radius: 4px; padding: 3px 10px; cursor: pointer; background: #f8fafc; color: #64748b; font-family: inherit; transition: all 0.15s; }
+  .btn.active { font-weight: 700; color: #fff; }
+  .btn.sort-btn.active { background: #dbeafe; color: #0f4c81; border-color: #93c5fd; }
+
+  /* Table */
+  .tbl { border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .tbl-head { display: grid; gap: 8px; padding: 8px 14px; background: #f8fafc; border-bottom: 1px solid #e2e8f0; align-items: center; }
+  .tbl-head span { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+  .tbl-row { display: grid; gap: 8px; padding: 7px 14px; border-bottom: 1px solid #f1f5f9; align-items: center; }
+  .tbl-row:nth-child(even) { background: #fafbfc; }
+  .tbl-cols-6 { grid-template-columns: 180px 82px 1fr 56px 1fr 60px; }
+  .tbl-cols-6b { grid-template-columns: 180px 60px 80px 80px 100px 1fr; }
+  .tbl-cols-5 { grid-template-columns: 180px 82px 90px 1fr 1fr; }
+
+  /* SDR name cell */
+  .sdr-cell { display: flex; align-items: center; gap: 6px; }
+  .sdr-stripe { width: 3px; height: 28px; border-radius: 2px; flex-shrink: 0; }
+  .sdr-name { font-size: 12px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sdr-meta { font-size: 10px; color: #94a3b8; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  /* SAO tag */
+  .sao-tag { font-size: 11px; font-weight: 700; border-radius: 4px; padding: 2px 6px; white-space: nowrap; display: inline-block; border: 1px solid; }
+  .sao-green { color: #16a34a; background: #f0fdf4; border-color: #bbf7d0; }
+  .sao-lime { color: #65a30d; background: #f7fee7; border-color: #d9f99d; }
+  .sao-amber { color: #d97706; background: #fffbeb; border-color: #fde68a; }
+  .sao-red { color: #dc2626; background: #fef2f2; border-color: #fecaca; }
+
+  /* Bar */
+  .bar-track { background: #f1f5f9; border-radius: 4px; height: 14px; overflow: hidden; width: 100%; }
+  .bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s ease; }
+  .bar-wrap { display: flex; align-items: center; gap: 6px; }
+  .bar-label { font-size: 11px; color: #334155; font-weight: 500; min-width: 38px; text-align: right; }
+  .bar-label-bold { font-weight: 600; }
+
+  /* Efficiency */
+  .eff { font-size: 11px; font-weight: 600; }
+  .eff-good { color: #16a34a; }
+  .eff-mid { color: #64748b; }
+  .eff-bad { color: #dc2626; }
+  .eff-na { color: #cbd5e1; }
+
+  /* Pattern cards */
+  .patterns { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pattern { border-radius: 10px; padding: 14px; border: 1px solid; }
+  .pattern h3 { font-size: 12px; font-weight: 700; margin-bottom: 6px; }
+  .pattern p { font-size: 12px; line-height: 1.6; }
+  .pat-green { background: #f0fdf4; border-color: #bbf7d0; }
+  .pat-green h3 { color: #166534; } .pat-green p { color: #14532d; }
+  .pat-blue { background: #f0f9ff; border-color: #bae6fd; }
+  .pat-blue h3 { color: #0369a1; } .pat-blue p { color: #0c4a6e; }
+  .pat-amber { background: #fffbeb; border-color: #fde68a; }
+  .pat-amber h3 { color: #92400e; } .pat-amber p { color: #78350f; }
+  .pat-red { background: #fef2f2; border-color: #fecaca; }
+  .pat-red h3 { color: #991b1b; } .pat-red p { color: #7f1d1d; }
+
+  /* Concentration */
+  .conc-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .conc-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; border-top: 3px solid; }
+  .conc-card h3 { font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 8px; }
+  .conc-card li { font-size: 12px; color: #475569; line-height: 1.6; margin-bottom: 3px; list-style: none; }
+  .conc-card li::before { content: "• "; }
+
+  /* Footnote */
+  .footnote { font-size: 10px; color: #94a3b8; font-style: italic; margin-top: 6px; }
+  .note { font-size: 11px; color: #64748b; margin-top: 8px; }
+
+  /* Ramp assessment */
+  .ramp-good { font-size: 11px; font-weight: 500; color: #16a34a; }
+  .ramp-warn { font-size: 11px; font-weight: 500; color: #d97706; }
+  .ramp-bad { font-size: 11px; font-weight: 500; color: #dc2626; }
+
+  .hidden { display: none; }
+
+  /* Pipeline target section */
+  .pipe-section { margin-bottom: 28px; }
+  .pipe-grid { display: grid; grid-template-columns: 1fr; gap: 6px; }
+  .pipe-row { display: grid; grid-template-columns: 120px 80px 1fr 80px 60px; gap: 10px; align-items: center; padding: 8px 14px; border-radius: 6px; }
+  .pipe-row:nth-child(odd) { background: #f8fafc; }
+  .pipe-row-head { padding: 6px 14px; }
+  .pipe-row-head span { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
+  .pipe-name { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+  .pipe-name .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+  .pipe-actual { font-size: 13px; font-weight: 700; color: #0f172a; text-align: right; }
+  .pipe-bar-track { background: #e2e8f0; border-radius: 6px; height: 20px; position: relative; overflow: hidden; width: 100%; }
+  .pipe-bar-fill { height: 100%; border-radius: 6px; transition: width 0.4s ease; }
+  .pipe-bar-target { position: absolute; top: 0; height: 100%; width: 2px; background: #0f172a; opacity: 0.5; }
+  .pipe-target-label { font-size: 11px; color: #94a3b8; text-align: right; }
+  .pipe-pct { font-size: 13px; font-weight: 700; text-align: right; }
+  .pipe-global { border: 2px solid #e2e8f0; border-radius: 8px; padding: 10px 14px; margin-bottom: 8px; display: grid; grid-template-columns: 120px 80px 1fr 80px 60px; gap: 10px; align-items: center; }
+
+  @media print {
+    body { padding: 12px; font-size: 10px; }
+    .btn, .controls { display: none !important; }
+    .cards { grid-template-columns: repeat(5, 1fr); }
+    .patterns { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="eyebrow">Global SDR Pipeline Review — Q1 FY26</div>
+  <h1>SDR Performance: Activities, SAOs &amp; Pipeline</h1>
+  <p class="subtitle">Data as of 5 February 2026 · Targets pro-rated: January (full) + February (25%) · AMER &amp; APJ are hybrid OB+IB with combined targets</p>
+
+  <!-- Pipeline vs Target -->
+  <div class="section">
+    <div class="section-head" style="border-color: #334155;">
+      <h2>Pipeline vs Pro-rated Target (€)</h2>
+      <p>Quarterly targets adjusted to 1.25 months (Jan full + 25% Feb)</p>
+    </div>
+    <div id="pipe-section"></div>
+  </div>
+
+  <!-- Regional summary cards -->
+  <div class="cards" id="cards"></div>
+
+  <!-- Distribution bar -->
+  <div class="distro" id="distro"></div>
+
+  <!-- TENURED OUTBOUND -->
+  <div class="section">
+    <div class="section-head" style="border-color: #0f4c81;">
+      <h2>Tenured Outbound SDRs</h2>
+      <p>Started before 1 December 2025 · AMER &amp; APJ cover both outbound and inbound with combined targets</p>
+    </div>
+    <div class="controls">
+      <div class="btn-group" id="region-btns"></div>
+      <div class="btn-group" id="sort-btns"></div>
+    </div>
+    <div class="tbl" id="tenured-tbl">
+      <div class="tbl-head tbl-cols-6">
+        <span>SDR</span><span>SAOs</span><span>Activities</span><span>Act/SAO</span><span>Pipeline (€)</span><span>Pipe/SAO</span>
+      </div>
+      <div id="tenured-rows"></div>
+    </div>
+    <p class="footnote">AMER pipeline heavily skewed by Erick Carranza's single €440k inbound opp (Trials). Erick departed end of January. Sho Nakazawa's 50 recorded activities likely reflects alternative tracking outside Salesloft.</p>
+  </div>
+
+  <!-- KEY PATTERNS -->
+  <div class="section">
+    <div class="section-head" style="border-color: #d97706;">
+      <h2>Key Patterns</h2>
+      <p>Four intervention types across the global team</p>
+    </div>
+    <div class="patterns">
+      <div class="pattern pat-green">
+        <h3>✅ Setting the Standard</h3>
+        <p>Ryuya (167%), Malvina (182%), Johannes (163%), Chisako (100%), Loic (113%), Andrew (100%), Marva (100%). High attainment on pro-rated targets. APJ is the strongest region overall. Malvina's 13.3k activities set the global volume benchmark.</p>
+      </div>
+      <div class="pattern pat-blue">
+        <h3>💡 Efficient but Under-leveraged</h3>
+        <p>Johannes (58 acts/SAO, €230k), Sho (4 acts/SAO, €132k), Fabio (117 acts/SAO, €91k). Exceptional conversion on low recorded volume. Increasing their activity to team median would unlock significant incremental pipeline.</p>
+      </div>
+      <div class="pattern pat-amber">
+        <h3>⚠️ High Activity, Low Conversion</h3>
+        <p>Casey Arra (1,800 → 1 SAO, €2k), Kaho Mizumachi (3,900 → 6 SAOs, €24k), Burak Ayten (1,700 → 3 SAOs, €43k). Effort is present but targeting or qualification needs work. STRATEGIC framework coaching and account selection review are the priority actions.</p>
+      </div>
+      <div class="pattern pat-red">
+        <h3>🔴 Low Activity, Low Results</h3>
+        <p>Julian Spretz (250 acts, €23k), Philip Croes (400, €26k), Armin (800, €17k), Matthew Salisbury (700, €76k). Activity must increase within sacred hours. Post-SKO momentum has not translated into sustained daily volume. Matthew's pipeline-per-SAO suggests quality is there but volume is not.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONCENTRATION RISK -->
+  <div class="section">
+    <div class="section-head" style="border-color: #dc2626;">
+      <h2>Concentration Risk</h2>
+      <p>Pipeline and SAO dependency on a small number of SDRs</p>
+    </div>
+    <div class="conc-grid">
+      <div class="conc-card" style="border-top-color: #F18F01;">
+        <h3>EMEA</h3>
+        <ul>
+          <li>Top 2 (Malvina, Marva) = €403k of €675k (60%)</li>
+          <li>Casey Arra at €2k from 1,800 activities</li>
+          <li>Matthew at €76k from just 1 SAO — lumpy</li>
+        </ul>
+      </div>
+      <div class="conc-card" style="border-top-color: #7B2D8E;">
+        <h3>AMER</h3>
+        <ul>
+          <li>Erick Carranza's €445k = 73% of team total</li>
+          <li>Single €440k opp from Trials skews heavily</li>
+          <li>With Erick departed, remaining 3 SDRs = €153k</li>
+        </ul>
+      </div>
+      <div class="conc-card" style="border-top-color: #C73E1D;">
+        <h3>APJ</h3>
+        <ul>
+          <li>Most balanced region: 4 SDRs above €130k</li>
+          <li>Ryuya at €347k leads but not dependent on him</li>
+          <li>Kaho at €24k is the only significant gap</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- NEW STARTERS -->
+  <div class="section">
+    <div class="section-head" style="border-color: #7c3aed;">
+      <h2>New Starters (Dec 2025 onwards)</h2>
+      <p>On ramp — activity levels are the leading indicator</p>
+    </div>
+    <div class="tbl">
+      <div class="tbl-head tbl-cols-6b">
+        <span>SDR</span><span>Start</span><span>SAOs</span><span>Pipeline</span><span>Activities</span><span>Ramp Assessment</span>
+      </div>
+      <div id="new-rows"></div>
+    </div>
+    <p class="note">Grace Haskell (AMER) already producing 4 SAOs and €7.1k pipeline from 750 activities — strong early ramp. Julia Laura Damrath at 50 activities is a concern. Onboarding overhaul underway to get new hires on phones by week three.</p>
+  </div>
+
+  <!-- INBOUND -->
+  <div class="section">
+    <div class="section-head" style="border-color: #7b2d8e;">
+      <h2>Inbound SDRs (EMEA &amp; DACH)</h2>
+      <p>Activity includes event invites — not comparable to outbound. AMER &amp; APJ inbound is handled by the hybrid team above.</p>
+    </div>
+    <div class="tbl">
+      <div class="tbl-head tbl-cols-5">
+        <span>SDR</span><span>SAOs</span><span>Pipeline</span><span>Activities</span><span>Context</span>
+      </div>
+      <div id="inbound-rows"></div>
+    </div>
+    <p class="footnote">Danielle Carroll starts as Inbound Manager on 15 February. Two additional DACH inbound hires in the pipeline for Q1.</p>
+  </div>
+</div>
+
+<script>
+const REGION_COLORS = { EMEA: "#F18F01", DACH: "#0F4C81", AMER: "#7B2D8E", APJ: "#C73E1D" };
+
+const TENURED = [
+  { name:"Malvina Muraccioli", region:"EMEA", segment:"MM", manager:"Julien", saos:20, target:11, pipeline:258000, activities:13300 },
+  { name:"Loic Hermabessiere", region:"EMEA", segment:"ENT", manager:"Julien", saos:9, target:8, pipeline:137000, activities:1700 },
+  { name:"Marva Hakimi", region:"EMEA", segment:"ENT", manager:"Julien", saos:6, target:6, pipeline:145000, activities:5100 },
+  { name:"Daniel Viñas Boreland", region:"EMEA", segment:"ENT", manager:"Julien", saos:4, target:6, pipeline:57000, activities:null },
+  { name:"Matthew Salisbury", region:"EMEA", segment:"ENT", manager:"Julien", saos:1, target:6, pipeline:76000, activities:700 },
+  { name:"Casey Arra", region:"EMEA", segment:"MM", manager:"Julien", saos:1, target:5, pipeline:1500, activities:1800 },
+  { name:"Johannes Hounsgaard", region:"DACH", segment:"ENT", manager:"Zachary", saos:13, target:8, pipeline:230000, activities:750 },
+  { name:"Lucas Durst", region:"DACH", segment:"ENT", manager:"Zachary", saos:6, target:8, pipeline:161000, activities:900 },
+  { name:"Fabio Ferrauti", region:"DACH", segment:"ENT", manager:"Patricia", saos:6, target:9, pipeline:91000, activities:700 },
+  { name:"Burak Ayten", region:"DACH", segment:"ENT", manager:"Zachary", saos:3, target:8, pipeline:43000, activities:1700 },
+  { name:"Philip Croes", region:"DACH", segment:"MM", manager:"Patricia", saos:3, target:9, pipeline:26000, activities:400 },
+  { name:"Julian Spretz", region:"DACH", segment:"ENT", manager:"Zachary", saos:2, target:8, pipeline:23000, activities:250 },
+  { name:"Armin Oesterwind", region:"DACH", segment:"ENT", manager:"Zachary", saos:1, target:8, pipeline:17000, activities:800 },
+  { name:"Andrew Moher", region:"AMER", segment:"MM", manager:"Woojin", saos:12, target:12, pipeline:55000, activities:1200 },
+  { name:"Tyler Escamilla", region:"AMER", segment:"ENT", manager:"Woojin", saos:7, target:14, pipeline:83000, activities:3000 },
+  { name:"Richard Lam", region:"AMER", segment:"MM", manager:"Woojin", saos:4, target:12, pipeline:15000, activities:950 },
+  { name:"Erick Carranza", region:"AMER", segment:"MM", manager:"Woojin", saos:4, target:9, pipeline:445000, activities:null, note:"Departed end Jan · €440k single opp" },
+  { name:"Ryuya Tanida", region:"APJ", segment:"MM", manager:"Rio", saos:25, target:15, pipeline:347000, activities:5000 },
+  { name:"Chisako Nukui", region:"APJ", segment:"ENT", manager:"Rio", saos:17, target:17, pipeline:161000, activities:6100 },
+  { name:"Kai Nakamichi", region:"APJ", segment:"ENT", manager:"Rio", saos:13, target:17, pipeline:154000, activities:1400 },
+  { name:"Sho Nakazawa", region:"APJ", segment:"ENT", manager:"Rio", saos:14, target:17, pipeline:132000, activities:50 },
+  { name:"Kaho Mizumachi", region:"APJ", segment:"MM", manager:"Rio", saos:6, target:15, pipeline:24000, activities:3900 },
+];
+
+const NEW_STARTERS = [
+  { name:"Grace Haskell", region:"AMER", segment:"ENT", manager:"Woojin", saos:4, target:8, pipeline:7100, activities:750, startDate:"Dec '25" },
+  { name:"Salma Geaissa", region:"DACH", segment:"MM", manager:"Patricia", saos:0, target:1, pipeline:0, activities:700, startDate:"Dec '25" },
+  { name:"Giulio Sudano", region:"DACH", segment:"MM", manager:"Patricia", saos:0, target:5, pipeline:0, activities:300, startDate:"Dec '25" },
+  { name:"Julia Laura Damrath", region:"DACH", segment:"ENT", manager:"Zachary", saos:0, target:1, pipeline:0, activities:50, startDate:"Dec '25" },
+];
+
+const INBOUND = [
+  { name:"Lucas Schmalzl", region:"DACH", manager:"Andy", saos:23, target:15, pipeline:202000, activities:3200, note:"Carrying the inbound function" },
+  { name:"Oisin Flynn", region:"EMEA", manager:"Andy", saos:5, target:17, pipeline:16000, activities:6900, note:"High event invite volume" },
+  { name:"Ying Hong", region:"DACH", manager:"Andy", saos:2, target:11, pipeline:3800, activities:3000, note:"New starter + event invites" },
+];
+
+let currentRegion = "ALL";
+let currentSort = "saoPct";
+const MAX_ACT = 14000;
+const MAX_PIPE = 460000;
+
+function fmt(val) {
+  if (val === null || val === undefined) return "—";
+  if (val >= 1000) return "€" + Math.round(val / 1000) + "k";
+  if (val > 0) return "€" + (val / 1000).toFixed(1) + "k";
+  return "€0";
+}
+
+function saoPct(s) { return s.target > 0 ? (s.saos / s.target) * 100 : 0; }
+
+function saoTagClass(pct) {
+  if (pct >= 100) return "sao-green";
+  if (pct >= 75) return "sao-lime";
+  if (pct >= 50) return "sao-amber";
+  return "sao-red";
+}
+
+function effClass(eff) {
+  if (eff === null) return "eff-na";
+  if (eff < 150) return "eff-good";
+  if (eff > 500) return "eff-bad";
+  return "eff-mid";
+}
+
+function bar(value, max, color) {
+  if (value === null || value === undefined) return '<span style="font-size:10px;color:#cbd5e1;font-style:italic">No data</span>';
+  const pct = Math.min(Math.max((value / max) * 100, 0.5), 100);
+  return `<div class="bar-wrap">
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${color}"></div></div>
+    <span class="bar-label bar-label-bold">${fmt(value)}</span>
+  </div>`;
+}
+
+function actBar(value) {
+  if (value === null) return '<span style="font-size:10px;color:#cbd5e1;font-style:italic">No data</span>';
+  const pct = Math.min(Math.max((value / MAX_ACT) * 100, 0.5), 100);
+  return `<div class="bar-wrap">
+    <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#60a5fa"></div></div>
+    <span class="bar-label">${value.toLocaleString()}</span>
+  </div>`;
+}
+
+function renderCards() {
+  const total = { saos: 0, target: 0, pipeline: 0 };
+  TENURED.forEach(s => { total.saos += s.saos; total.target += s.target; total.pipeline += (s.pipeline || 0); });
+  const globalPct = (total.saos / total.target * 100).toFixed(0);
+  const globalColor = globalPct >= 75 ? "#16a34a" : globalPct >= 50 ? "#d97706" : "#d97706";
+
+  let html = `<div class="card">
+    <div class="card-label">Global Tenured OB</div>
+    <div class="card-value" style="color:${globalColor}">${globalPct}% SAO</div>
+    <div class="card-sub">${total.saos}/${total.target} · ${fmt(total.pipeline)} pipeline</div>
+  </div>`;
+
+  ["EMEA","DACH","AMER","APJ"].forEach(r => {
+    const reps = TENURED.filter(s => s.region === r);
+    const saos = reps.reduce((a, s) => a + s.saos, 0);
+    const target = reps.reduce((a, s) => a + s.target, 0);
+    const pipe = reps.reduce((a, s) => a + (s.pipeline || 0), 0);
+    const pct = target > 0 ? (saos / target * 100).toFixed(0) : 0;
+    const color = pct >= 75 ? "#16a34a" : pct >= 50 ? "#d97706" : "#dc2626";
+    html += `<div class="card card-region" style="border-left-color:${REGION_COLORS[r]}">
+      <div class="card-label">${r}</div>
+      <div class="card-value" style="color:${color}">${pct}%</div>
+      <div class="card-sub">${saos}/${target} · ${reps.length} SDRs · ${fmt(pipe)}</div>
+    </div>`;
+  });
+  document.getElementById("cards").innerHTML = html;
+
+  // Distribution
+  const above100 = TENURED.filter(s => saoPct(s) >= 100).length;
+  const above75 = TENURED.filter(s => saoPct(s) >= 75 && saoPct(s) < 100).length;
+  const between = TENURED.filter(s => saoPct(s) >= 50 && saoPct(s) < 75).length;
+  const below50 = TENURED.filter(s => saoPct(s) < 50).length;
+  document.getElementById("distro").innerHTML = `
+    <span style="color:#64748b;margin-right:4px">Distribution:</span>
+    <span style="font-weight:700;color:#16a34a">✅ ${above100} above target</span><span class="sep">|</span>
+    <span style="font-weight:700;color:#65a30d">🟢 ${above75} at 75–99%</span><span class="sep">|</span>
+    <span style="font-weight:700;color:#d97706">⚠️ ${between} at 50–74%</span><span class="sep">|</span>
+    <span style="font-weight:700;color:#dc2626">🔴 ${below50} below 50%</span>
+    <span class="right">${TENURED.length} tenured SDRs</span>`;
+}
+
+function renderControls() {
+  let rhtml = "";
+  ["ALL","EMEA","DACH","AMER","APJ"].forEach(r => {
+    const active = currentRegion === r;
+    const bg = active ? (REGION_COLORS[r] || "#334155") : "";
+    const cls = active ? "btn active" : "btn";
+    const style = active ? `background:${bg};border-color:${bg};color:#fff` : "";
+    rhtml += `<button class="${cls}" style="${style}" onclick="setRegion('${r}')">${r}</button>`;
+  });
+  document.getElementById("region-btns").innerHTML = rhtml;
+
+  let shtml = "";
+  [["saoPct","SAO %"],["pipeline","Pipeline"],["activities","Activities"],["efficiency","Efficiency"]].forEach(([key, label]) => {
+    const cls = currentSort === key ? "btn sort-btn active" : "btn sort-btn";
+    shtml += `<button class="${cls}" onclick="setSort('${key}')">${label}</button>`;
+  });
+  document.getElementById("sort-btns").innerHTML = shtml;
+}
+
+function renderTenured() {
+  let data = currentRegion === "ALL" ? [...TENURED] : TENURED.filter(s => s.region === currentRegion);
+
+  data.sort((a, b) => {
+    if (currentSort === "pipeline") return (b.pipeline || 0) - (a.pipeline || 0);
+    if (currentSort === "activities") return (b.activities || 0) - (a.activities || 0);
+    if (currentSort === "saoPct") return saoPct(b) - saoPct(a);
+    if (currentSort === "efficiency") {
+      const aE = a.saos > 0 && a.activities ? a.activities / a.saos : 99999;
+      const bE = b.saos > 0 && b.activities ? b.activities / b.saos : 99999;
+      return aE - bE;
+    }
+    return 0;
+  });
+
+  let html = "";
+  data.forEach(s => {
+    const pct = saoPct(s);
+    const eff = s.saos > 0 && s.activities ? Math.round(s.activities / s.saos) : null;
+    const pps = s.saos > 0 && s.pipeline ? s.pipeline / s.saos : null;
+    const note = s.note ? ` · ${s.note}` : "";
+
+    html += `<div class="tbl-row tbl-cols-6">
+      <div class="sdr-cell">
+        <div class="sdr-stripe" style="background:${REGION_COLORS[s.region]}"></div>
+        <div><div class="sdr-name">${s.name}</div><div class="sdr-meta">${s.region} ${s.segment} · ${s.manager}${note}</div></div>
+      </div>
+      <span class="sao-tag ${saoTagClass(pct)}">${s.saos}/${s.target} (${pct.toFixed(0)}%)</span>
+      ${actBar(s.activities)}
+      <span class="eff ${effClass(eff)}">${eff !== null ? eff : "—"}</span>
+      ${bar(s.pipeline, MAX_PIPE, "#34d399")}
+      <span class="eff ${pps && pps >= 15000 ? 'eff-good' : 'eff-mid'}">${pps ? fmt(pps) : "—"}</span>
+    </div>`;
+  });
+  document.getElementById("tenured-rows").innerHTML = html;
+}
+
+function renderNewStarters() {
+  let html = "";
+  NEW_STARTERS.forEach(s => {
+    const pct = saoPct(s);
+    let ramp, rampClass;
+    if (s.saos >= 3) { ramp = "✅ Producing early — strong ramp"; rampClass = "ramp-good"; }
+    else if (s.activities < 200) { ramp = "🔴 Activity critically low — onboarding review"; rampClass = "ramp-bad"; }
+    else if (s.activities < 500) { ramp = "⚠️ Below ramp expectations"; rampClass = "ramp-warn"; }
+    else { ramp = "On track — SAOs expected as ramp progresses"; rampClass = "ramp-good"; }
+
+    html += `<div class="tbl-row tbl-cols-6b">
+      <div class="sdr-cell">
+        <div class="sdr-stripe" style="background:${REGION_COLORS[s.region]}"></div>
+        <div><div class="sdr-name">${s.name}</div><div class="sdr-meta">${s.region} ${s.segment} · ${s.manager}</div></div>
+      </div>
+      <span style="font-size:11px;color:#7c3aed;font-weight:600">${s.startDate}</span>
+      <span class="sao-tag ${saoTagClass(pct)}">${s.saos}/${s.target} (${pct.toFixed(0)}%)</span>
+      <span style="font-size:11px;color:#334155;font-weight:500">${fmt(s.pipeline)}</span>
+      <span style="font-size:11px;color:#334155">${s.activities.toLocaleString()}</span>
+      <span class="${rampClass}">${ramp}</span>
+    </div>`;
+  });
+  document.getElementById("new-rows").innerHTML = html;
+}
+
+function renderInbound() {
+  const sorted = [...INBOUND].sort((a, b) => b.pipeline - a.pipeline);
+  let html = "";
+  sorted.forEach(s => {
+    const pct = saoPct(s);
+    html += `<div class="tbl-row tbl-cols-5">
+      <div class="sdr-cell">
+        <div class="sdr-stripe" style="background:#7b2d8e"></div>
+        <div><div class="sdr-name">${s.name}</div><div class="sdr-meta">${s.region} Inbound · ${s.manager}</div></div>
+      </div>
+      <span class="sao-tag ${saoTagClass(pct)}">${s.saos}/${s.target} (${pct.toFixed(0)}%)</span>
+      <span style="font-size:11px;font-weight:600;color:#334155">${fmt(s.pipeline)}</span>
+      <div class="bar-wrap">
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(s.activities/7000*100,100)}%;background:#a78bfa"></div></div>
+        <span class="bar-label">${s.activities.toLocaleString()}</span>
+      </div>
+      <span style="font-size:11px;color:#64748b;font-style:italic">${s.note}</span>
+    </div>`;
+  });
+  document.getElementById("inbound-rows").innerHTML = html;
+}
+
+function setRegion(r) { currentRegion = r; renderControls(); renderTenured(); }
+function setSort(s) { currentSort = s; renderControls(); renderTenured(); }
+
+function renderPipeline() {
+  const PIPE_DATA = [
+    { name: "DACH", color: "#0F4C81", actual: 645000, qTarget: 3470000 },
+    { name: "Rest of EMEA", color: "#F18F01", actual: 677000, qTarget: 1450000 },
+    { name: "Inbound (EMEA/DACH)", color: "#7b2d8e", actual: 165000, qTarget: 1970000 },
+    { name: "AMER", color: "#7B2D8E", actual: 606000, qTarget: 1610000 },
+    { name: "APJ", color: "#C73E1D", actual: 818000, qTarget: 2540000 },
+  ];
+
+  // Pro-rate: 1.25 / 3
+  const factor = 1.25 / 3;
+  PIPE_DATA.forEach(d => { d.proTarget = Math.round(d.qTarget * factor); });
+
+  const globalActual = PIPE_DATA.reduce((s, d) => s + d.actual, 0);
+  const globalProTarget = PIPE_DATA.reduce((s, d) => s + d.proTarget, 0);
+  const globalPct = (globalActual / globalProTarget * 100).toFixed(0);
+
+  function pipeColor(pct) { return pct >= 90 ? "#16a34a" : pct >= 70 ? "#65a30d" : pct >= 50 ? "#d97706" : "#dc2626"; }
+  function fmtK(v) { return v >= 1000000 ? "€" + (v / 1000000).toFixed(1) + "M" : "€" + Math.round(v / 1000) + "k"; }
+
+  // Each bar is relative to its own target (100% = pro-rated target)
+  // Cap visual at 120% so over-performers still show clearly
+  function pipeRow(d, isGlobal) {
+    const pct = (d.actual / d.proTarget * 100);
+    const barW = Math.min(pct / 1.2, 100); // scale so 120% attainment = full bar
+    const targetW = 100 / 1.2; // target line at 83.3% of track (represents 100%)
+    const cls = isGlobal ? "pipe-global" : "pipe-row";
+    const nameStyle = isGlobal ? "font-size:14px;font-weight:700" : "";
+    return `<div class="${cls}">
+      <div class="pipe-name" style="${nameStyle}"><span class="dot" style="background:${d.color}"></span>${d.name}</div>
+      <div class="pipe-actual">${fmtK(d.actual)}</div>
+      <div class="pipe-bar-track">
+        <div class="pipe-bar-fill" style="width:${barW}%;background:${d.color};opacity:0.75"></div>
+        <div class="pipe-bar-target" style="left:${targetW}%"></div>
+      </div>
+      <div class="pipe-target-label">${fmtK(d.proTarget)} target</div>
+      <div class="pipe-pct" style="color:${pipeColor(pct)}">${pct.toFixed(0)}%</div>
+    </div>`;
+  }
+
+  let html = pipeRow({ name: "Global", color: "#334155", actual: globalActual, proTarget: globalProTarget }, true);
+  html += '<div class="pipe-grid">';
+  PIPE_DATA.forEach(d => { html += pipeRow(d, false); });
+  html += '</div>';
+  html += `<p class="footnote" style="margin-top:8px">Each bar shows attainment relative to that region's pro-rated target (vertical line = 100%). Quarterly targets: DACH €3.47M (Corp + ENT), Rest of EMEA €1.45M, Inbound €1.97M, AMER €1.61M, APJ €2.54M.</p>`;
+
+  document.getElementById("pipe-section").innerHTML = html;
+}
+
+// Init
+renderPipeline();
+renderCards();
+renderControls();
+renderTenured();
+renderNewStarters();
+renderInbound();
+</script>
+</body>
+</html>
