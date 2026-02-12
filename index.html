@@ -1,0 +1,2506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SDR Weekly Performance Dashboard — Q1 FY26</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', -apple-system, sans-serif; background: #f8fafc; color: #0f172a; }
+  .dashboard { max-width: 1200px; margin: 0 auto; padding: 24px; }
+
+  /* Header */
+  .dash-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 24px; border-bottom: 3px solid #0F4C81; padding-bottom: 16px; }
+  .dash-title { font-size: 11px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1.5px; font-weight: 600; }
+  .dash-h1 { font-size: 26px; font-weight: 800; color: #0F4C81; margin-top: 2px; }
+  .dash-meta { text-align: right; font-size: 12px; color: #64748b; line-height: 1.6; }
+  .dash-meta strong { color: #0f172a; }
+
+  /* Sections */
+  .section { margin-bottom: 28px; }
+  /* Tab navigation */
+  .tab-bar { display: flex; gap: 4px; margin: 0 0 18px 0; padding: 4px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; }
+  .tab-btn { padding: 10px 24px; font-size: 13px; font-weight: 600; color: #64748b; background: transparent; border: 1px solid transparent; border-radius: 6px; cursor: pointer; transition: all 0.15s; }
+  .tab-btn:hover { color: #0F4C81; background: #e2e8f0; }
+  .tab-btn.active { color: #fff; background: #0F4C81; border-color: #0F4C81; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+  .section-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+  .section-title { font-size: 15px; font-weight: 700; color: #0F4C81; border-left: 4px solid #0F4C81; padding-left: 10px; }
+  .section-sub { font-size: 11px; color: #94a3b8; }
+
+  /* KPI cards */
+  .kpi-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .kpi { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; position: relative; overflow: hidden; display: flex; flex-direction: column; }
+  .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+  .kpi.green::before { background: #16a34a; } .kpi.amber::before { background: #d97706; }
+  .kpi.red::before { background: #dc2626; } .kpi.blue::before { background: #0F4C81; }
+  .kpi.purple::before { background: #7B2D8E; } .kpi.orange::before { background: #F18F01; }
+  .kpi.grey::before { background: #94a3b8; }
+  .kpi-label { font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .kpi-value { font-size: 26px; font-weight: 800; margin: 4px 0 2px; }
+  .kpi-target { font-size: 11px; color: #64748b; flex: 1; }
+  .kpi-delta { font-size: 11px; font-weight: 600; margin-top: 6px; padding: 2px 6px; border-radius: 4px; display: inline-block; align-self: flex-start; }
+  .kpi-delta.up { background: #f0fdf4; color: #16a34a; } .kpi-delta.down { background: #fef2f2; color: #dc2626; } .kpi-delta.flat { background: #f1f5f9; color: #64748b; } .kpi-delta.amber { background: #fffbeb; color: #d97706; }
+
+  /* WoW changes */
+  .wow-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .highlights-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; }
+  .highlight-card { background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%); border-radius: 8px; padding: 14px 14px 12px; border-left: 3px solid #16a34a; position: relative; }
+  .highlight-emoji { font-size: 20px; margin-bottom: 6px; }
+  .highlight-name { font-size: 11px; font-weight: 700; color: #0F4C81; margin-bottom: 2px; }
+  .highlight-title { font-size: 10px; font-weight: 600; color: #16a34a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .highlight-stat { font-size: 18px; font-weight: 800; color: #0f172a; margin-bottom: 4px; line-height: 1.1; }
+  .highlight-detail { font-size: 9px; color: #64748b; line-height: 1.3; }
+  .wow-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px 16px; }
+  .wow-card-title { font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 6px; }
+  .wow-main { font-size: 22px; font-weight: 800; }
+  .wow-detail { font-size: 11px; color: #64748b; margin-top: 4px; line-height: 1.5; }
+  .wow-tag { font-size: 10px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 4px; }
+  .wow-tag.pos { background: #f0fdf4; color: #16a34a; } .wow-tag.neg { background: #fef2f2; color: #dc2626; } .wow-tag.neu { background: #f1f5f9; color: #64748b; }
+
+  /* BU progress */
+  .bu-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+  .bu-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 16px; }
+  .bu-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .bu-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .progress-row { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+  .progress-label { font-size: 10px; font-weight: 600; color: #64748b; min-width: 55px; text-transform: uppercase; white-space: nowrap; }
+  .progress-track { flex: 1; background: #f1f5f9; border-radius: 6px; height: 20px; position: relative; overflow: hidden; }
+  .progress-fill { height: 100%; border-radius: 6px; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; }
+  .progress-fill span { font-size: 9px; font-weight: 700; color: #fff; }
+  .progress-val { font-size: 11px; font-weight: 700; width: 90px; text-align: right; }
+
+  /* Regional allbound */
+  .region-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+  .region-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; border-top: 3px solid; }
+  .region-card.dach { border-top-color: #0F4C81; } .region-card.emea { border-top-color: #F18F01; }
+  .region-card.amer { border-top-color: #7B2D8E; } .region-card.apj { border-top-color: #C73E1D; }
+  .trend-tag { display: inline-flex; align-items: center; gap: 3px; font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 4px; }
+  .trend-tag.up { background: #f0fdf4; color: #16a34a; }
+  .trend-tag.down { background: #fef2f2; color: #dc2626; }
+  .trend-tag.flat { background: #f1f5f9; color: #64748b; }
+  .region-name { font-size: 13px; font-weight: 700; margin-bottom: 2px; display: flex; align-items: center; justify-content: space-between; }
+  .region-stat { display: flex; justify-content: space-between; font-size: 11px; padding: 3px 0; border-bottom: 1px solid #f1f5f9; }
+  .region-stat:last-child { border: none; }
+  .region-stat-label { color: #64748b; } .region-stat-val { font-weight: 700; }
+
+  /* Zone summary */
+  .zone-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; }
+  .zone-card { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 14px; text-align: center; }
+  .zone-card-label { font-size: 10px; font-weight: 700; text-transform: uppercase; margin-bottom: 6px; }
+  .zone-card-count { font-size: 28px; font-weight: 800; }
+  .zone-card-names { font-size: 10px; color: #64748b; margin-top: 6px; line-height: 1.5; }
+
+  /* Charts */
+  .chart-container { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px; }
+  .chart-area { width: 100%; height: 380px; position: relative; }
+  canvas { width: 100%; height: 100%; }
+  .chart-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+
+  /* Filter bar */
+  .filter-bar { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+  .filter-btn { padding: 6px 14px; border-radius: 6px; border: 1px solid #e2e8f0; background: #fff; font-family: inherit; font-size: 11px; font-weight: 600; cursor: pointer; transition: all 0.15s; color: #64748b; }
+  .filter-btn:hover { border-color: #0F4C81; color: #0F4C81; }
+  .filter-btn.active { background: #0F4C81; color: #fff; border-color: #0F4C81; }
+  .filter-group-label { font-size: 10px; font-weight: 700; color: #94a3b8; text-transform: uppercase; align-self: center; width: 85px; flex-shrink: 0; }
+  
+
+  /* SDR table */
+  .sdr-table-wrap { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; overflow: hidden; }
+  .sdr-table { width: 100%; border-collapse: collapse; font-size: 11px; }
+  .sdr-table thead th { background: #f8fafc; padding: 8px 10px; text-align: center; font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #e2e8f0; cursor: pointer; white-space: nowrap; user-select: none; }
+  .sdr-table thead th:first-child { text-align: left; }
+  .sdr-table thead th:hover { color: #0F4C81; }
+  .sdr-table tbody td { padding: 7px 10px; border-bottom: 1px solid #f1f5f9; text-align: center; }
+  .sdr-table tbody td:first-child { text-align: left; }
+  .sdr-table tbody tr:hover { background: #f8fafc; }
+  .sdr-name-cell { font-weight: 600; }
+  .sdr-meta-cell { font-size: 10px; color: #94a3b8; }
+  .sdr-badges { display: flex; gap: 4px; margin-top: 2px; flex-wrap: wrap; }
+  .sdr-badge { font-size: 8px; font-weight: 700; padding: 1px 5px; border-radius: 3px; text-transform: uppercase; letter-spacing: 0.3px; }
+  .sdr-badge-seg { background: #f1f5f9; color: #475569; border: 1px solid #e2e8f0; }
+  .sdr-badge-ramp { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+  .sdr-badge-full { background: #f8fafc; color: #94a3b8; border: 1px solid #e2e8f0; }
+  .sdr-badge-region { background: #faf5ff; color: #7c3aed; border: 1px solid #e9d5ff; }
+  .rag-cell { border-radius: 4px; padding: 4px 8px; text-align: center; }
+  .rag-cell-green { background: #f0fdf4; }
+  .rag-cell-lime { background: #f7fee7; }
+  .rag-cell-amber { background: #fffbeb; }
+  .rag-cell-red { background: #fef2f2; }
+  .rag-val { font-size: 13px; font-weight: 700; line-height: 1.2; }
+  .rag-sub { font-size: 9px; color: #64748b; font-weight: 500; }
+  .act-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+  .eff-arrow { font-size: 10px; margin-left: 2px; }
+  .tag { font-size: 9px; font-weight: 700; padding: 2px 6px; border-radius: 4px; display: inline-block; }
+  .tag-green { background: #f0fdf4; color: #16a34a; border: 1px solid #bbf7d0; }
+  .tag-lime { background: #f7fee7; color: #65a30d; border: 1px solid #d9f99d; }
+  .tag-amber { background: #fffbeb; color: #d97706; border: 1px solid #fde68a; }
+  .tag-red { background: #fef2f2; color: #dc2626; border: 1px solid #fecaca; }
+  .mini-bar { background: #f1f5f9; border-radius: 3px; height: 10px; width: 80px; display: inline-block; overflow: hidden; vertical-align: middle; }
+  .mini-bar-fill { height: 100%; border-radius: 3px; }
+
+  /* Analysis section */
+  .analysis-box { background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 20px 24px; margin-top: 16px; }
+  .analysis-title { font-size: 14px; font-weight: 700; color: #0F4C81; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+  .analysis-title .icon { font-size: 16px; }
+  .analysis-body { font-size: 12px; color: #334155; line-height: 1.7; }
+  .analysis-body h4 { font-size: 12px; font-weight: 700; color: #0F4C81; margin: 12px 0 4px; }
+  .analysis-body h4:first-child { margin-top: 0; }
+  .analysis-body .callout { background: #f8fafc; border-left: 3px solid #0F4C81; padding: 8px 12px; margin: 8px 0; border-radius: 0 6px 6px 0; }
+  .analysis-body .callout.warn { border-left-color: #d97706; background: #fffbeb; }
+  .analysis-body .callout.good { border-left-color: #16a34a; background: #f0fdf4; }
+  .analysis-body .callout.risk { border-left-color: #dc2626; background: #fef2f2; }
+
+  /* Coaching Focus Matrix */
+  .coach-grid { display: flex; flex-direction: column; gap: 8px; }
+  .coach-group-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin: 12px 0 4px; padding: 4px 0; border-bottom: 1px solid #e2e8f0; display: flex; align-items: center; gap: 6px; }
+  .coach-group-title:first-child { margin-top: 0; }
+  .coach-card { display: grid; grid-template-columns: 160px 1fr 1fr; gap: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden; font-size: 11px; }
+  .coach-card-name { padding: 10px 12px; font-weight: 700; color: #1e293b; display: flex; flex-direction: column; justify-content: center; gap: 4px; border-right: 1px solid #f1f5f9; }
+  .coach-card-name .coach-zone-pill { display: inline-block; font-size: 9px; font-weight: 600; padding: 2px 8px; border-radius: 10px; width: fit-content; }
+  .coach-card-signal { padding: 10px 12px; color: #475569; line-height: 1.5; border-right: 1px solid #f1f5f9; }
+  .coach-card-signal strong { color: #1e293b; }
+  .coach-card-probe { padding: 10px 12px; color: #334155; line-height: 1.5; font-style: italic; background: #fafbfc; }
+  .coach-card-probe .probe-label, .coach-card-signal .probe-label { font-style: normal; font-weight: 600; font-size: 9px; text-transform: uppercase; color: #0F4C81; margin-bottom: 3px; }
+
+  .dash-footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #e2e8f0; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; }
+
+  @media print { body { background: #fff; } .filter-bar { display: none; } .dashboard { padding: 12px; } }
+  @media (max-width: 768px) { .kpi-row, .wow-grid, .highlights-grid { grid-template-columns: repeat(2, 1fr); } .bu-grid, .chart-pair { grid-template-columns: 1fr; } .region-strip { grid-template-columns: 1fr 1fr; } .zone-row { grid-template-columns: repeat(3, 1fr); } }
+</style>
+</head>
+<body>
+<div class="dashboard">
+
+  <!-- HEADER -->
+  <div class="dash-header">
+    <div>
+      <div class="dash-title">Sales Development Organisation</div>
+      <div class="dash-h1">Weekly Performance Dashboard</div>
+    </div>
+    <div class="dash-meta">
+      <div><strong>Q1 FY26</strong> · Week 5 ending 5 February 2026</div>
+      <div>5 of 13 weeks elapsed (38%)</div>
+      <div>Individual targets from FY26 comp plan</div>
+    </div>
+  </div>
+
+  <!-- TAB NAVIGATION -->
+  <div class="tab-bar">
+    <button class="tab-btn active" data-tab="summary">Summary</button>
+    <button class="tab-btn" data-tab="individual">Individual Performance</button>
+    <button class="tab-btn" data-tab="trends">Trends</button>
+    <button class="tab-btn" data-tab="historical">Historical Performance</button>
+  </div>
+
+  <!-- ═══ SUMMARY TAB ═══ -->
+  <div class="tab-content active" id="tab-summary">
+
+  <!-- 1. GLOBAL KPIs -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Global Headlines</div><div class="section-sub">All business units combined</div></div>
+    <div class="kpi-row" id="globalKpis"></div>
+  </div>
+
+  <!-- 2. WEEK-ON-WEEK CHANGES -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Week-on-Week Changes</div><div class="section-sub" id="wowSub"></div></div>
+    <div class="wow-grid" id="wowGrid"></div>
+  </div>
+
+  <!-- 2b. WEEK HIGHLIGHTS -->
+  <div class="section">
+    <div class="section-head"><div class="section-title" id="highlightsTitle"></div><div class="section-sub">Celebrating progress and momentum</div></div>
+    <div class="highlights-grid" id="highlightsGrid"></div>
+  </div>
+
+  <!-- 3. BU PIPELINE & SAO PROGRESS -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Pipeline &amp; SAO Progress by Business Unit</div><div class="section-sub">Cumulative vs individual pro-rated targets</div></div>
+    <div class="bu-grid" id="buGrid"></div>
+  </div>
+
+  <!-- 4. REGIONAL ALLBOUND -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Regional Allbound Summary</div><div class="section-sub">OB + IB combined by geography</div></div>
+    <div class="region-strip" id="regionStrip"></div>
+  </div>
+
+  <!-- 5. ZONE SUMMARY -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Performance Zone Summary</div><div class="section-sub">Outcome-led statuses · what coaching action is needed?</div></div>
+    <div class="zone-row" id="zoneRow"></div>
+  </div>
+
+  <!-- 6. ACTIVITY + PIPELINE DISTRIBUTION -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Team Distributions</div><div class="section-sub">All SDRs · Global view</div></div>
+    <div style="display:flex;flex-direction:column;gap:14px">
+      <div class="chart-container">
+        <div style="font-size:12px;font-weight:700;color:#0F4C81;margin-bottom:8px">Weekly Activity Distribution</div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">Below 350 = Action · 350–500 = Building · Above 500 = Target pace</div>
+        <div class="chart-area" style="height:450px"><canvas id="bellChart"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <div style="font-size:12px;font-weight:700;color:#0F4C81;margin-bottom:8px">SAO Attainment Distribution (% of Individual Target)</div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">Below 50% = Action · 50–75% = Building · Above 75% = On-track</div>
+        <div class="chart-area" style="height:450px"><canvas id="saoChart"></canvas></div>
+      </div>
+      <div class="chart-container">
+        <div style="font-size:12px;font-weight:700;color:#0F4C81;margin-bottom:8px">Pipeline Attainment Distribution (% of Individual Target)</div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">Below 50% = Action · 50–90% = Building · Above 90% = On-track</div>
+        <div class="chart-area" style="height:450px"><canvas id="pipeChart"></canvas></div>
+      </div>
+    </div>
+  </div>
+
+  </div><!-- /tab-summary -->
+
+  <!-- ═══ INDIVIDUAL PERFORMANCE TAB ═══ -->
+  <div class="tab-content" id="tab-individual">
+
+  <!-- 7. FILTERS + SDR TABLE -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Individual SDR Performance</div><div class="section-sub" id="sdrCount"></div></div>
+    <div id="filterBar">
+      <div class="filter-bar">
+        <span class="filter-group-label">Business Unit</span>
+        <button class="filter-btn active" data-bu="ALL">All</button>
+        <button class="filter-btn" data-bu="DACH_ENT_OB">DACH ENT</button>
+        <button class="filter-btn" data-bu="DACH_CORP_OB">DACH CORP</button>
+        <button class="filter-btn" data-bu="EMEA_OB">EMEA OB</button>
+        <button class="filter-btn" data-bu="AMER_OB">AMER OB</button>
+        <button class="filter-btn" data-bu="APJ_OB">APJ OB</button>
+        <button class="filter-btn" data-bu="INBOUND">Inbound</button>
+      </div>
+      <div class="filter-bar" style="margin-top:-10px">
+        <span class="filter-group-label">Region</span>
+        <button class="filter-btn" data-region="DACH">DACH</button>
+        <button class="filter-btn" data-region="EMEA">EMEA</button>
+        <button class="filter-btn" data-region="AMER">AMER</button>
+        <button class="filter-btn" data-region="APJ">APJ</button>
+      </div>
+    </div>
+    <div class="sdr-table-wrap">
+      <table class="sdr-table" id="sdrTable">
+        <thead><tr id="sdrHead"></tr></thead>
+        <tbody id="sdrBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 8. ANALYSIS (filter-responsive) -->
+  <div class="section">
+    <div class="analysis-box" id="analysisBox"></div>
+  </div>
+
+  <!-- 9. COACHING FOCUS MATRIX (filter-responsive) -->
+  <div class="section">
+    <div class="section-head"><div class="section-title">Coaching Focus Matrix</div><div class="section-sub" id="coachingSub">Personalised development focus · updates weekly based on data, activity trends, and quarter phase</div></div>
+    <div id="coachingMatrix"></div>
+  </div>
+
+  </div><!-- /tab-individual -->
+
+  <!-- ═══ TRENDS TAB ═══ -->
+  <div class="tab-content" id="tab-trends">
+
+    <div class="section">
+      <div class="section-head"><div class="section-title">Q1 Trends</div><div class="section-sub">Cumulative target curve vs actuals · weekly snapshots</div></div>
+      <div id="trendFilterBar">
+        <div class="filter-bar">
+          <span class="filter-group-label" style="visibility:hidden">Global</span>
+          <button class="filter-btn active" data-tf="GLOBAL" style="min-width:120px">Global</button>
+        </div>
+        <div class="filter-bar" style="margin-top:-10px">
+          <span class="filter-group-label">Business Unit</span>
+          <button class="filter-btn" data-tf="DACH_ENT_OB">DACH ENT</button>
+          <button class="filter-btn" data-tf="DACH_CORP_OB">DACH CORP</button>
+          <button class="filter-btn" data-tf="EMEA_OB">EMEA OB</button>
+          <button class="filter-btn" data-tf="AMER_OB">AMER OB</button>
+          <button class="filter-btn" data-tf="APJ_OB">APJ OB</button>
+          <button class="filter-btn" data-tf="INBOUND">Inbound</button>
+        </div>
+        <div class="filter-bar" style="margin-top:-10px">
+          <span class="filter-group-label">Region</span>
+          <button class="filter-btn" data-tf="R_DACH">DACH</button>
+          <button class="filter-btn" data-tf="R_EMEA">EMEA</button>
+          <button class="filter-btn" data-tf="R_AMER">AMER</button>
+          <button class="filter-btn" data-tf="R_APJ">APJ</button>
+        </div>
+        <div class="filter-bar" style="margin-top:-10px">
+          <span class="filter-group-label">SDR</span>
+          <select id="trendSDRSelect" style="font-family:'DM Sans',sans-serif;font-size:12px;padding:5px 28px 5px 10px;border:1px solid #e2e8f0;border-radius:6px;color:#334155;background:#fff;min-width:320px;cursor:pointer;appearance:none;-webkit-appearance:none;background-image:url('data:image/svg+xml;utf8,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%2212%22 height=%2212%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22%2394a3b8%22 stroke-width=%222%22><polyline points=%226 9 12 15 18 9%22/></svg>');background-repeat:no-repeat;background-position:right 10px center">
+            <option value="">Select Business Unit or Region first</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Required per week callout -->
+    <div class="section" style="margin-top:-6px"><div id="trendCallout"></div></div>
+
+    <div class="section">
+      <div class="chart-container">
+        <div style="font-size:12px;font-weight:700;color:#0F4C81;margin-bottom:4px" id="trendPipeTitle">Pipeline Trend — Global</div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">Dashed line = pro-rated target curve · Solid line = cumulative actuals</div>
+        <div class="chart-area" style="height:494px"><canvas id="trendPipeCanvas"></canvas></div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="chart-container">
+        <div style="font-size:12px;font-weight:700;color:#0F4C81;margin-bottom:4px" id="trendSaoTitle">SAO Trend — Global</div>
+        <div style="font-size:10px;color:#94a3b8;margin-bottom:12px">Dashed line = pro-rated target curve · Solid line = cumulative actuals</div>
+        <div class="chart-area" style="height:494px"><canvas id="trendSaoCanvas"></canvas></div>
+      </div>
+    </div>
+
+  </div><!-- /tab-trends -->
+
+  <!-- ═══ HISTORICAL PERFORMANCE TAB ═══ -->
+  <div class="tab-content" id="tab-historical">
+    <div class="section">
+      <div class="section-head"><div class="section-title">Historical Performance</div><div class="section-sub">FY25 benchmarks and prior quarter results</div></div>
+      <div style="padding:40px 0;text-align:center;color:#94a3b8;font-size:13px">FY25 benchmark data and quarterly comparisons will appear here.</div>
+    </div>
+  </div><!-- /tab-historical -->
+
+  <div class="dash-footer">
+    <div>Prepared by SDR Leadership · Source: Salesloft + Salesforce + FY26 Comp Plan · Data as of 5 Feb 2026</div>
+    <div>Excludes Sho Nakazawa (tracking), Daniel Viñas Boreland (no Salesloft), Erick Carranza (departed), Mayuko Ogisu (just started)</div>
+  </div>
+</div>
+
+<script>
+// ============================================================
+// CORE DATA
+// ============================================================
+const WEEK = { ending: '2026-02-05', number: 5, weeksElapsed: 5, totalWeeks: 13, weeksRemaining: 8 };
+
+const BU_META = {
+  DACH_ENT_OB: { label: 'DACH Enterprise Outbound', color: '#0F4C81', managers: ['David Perl'], mgrShort: 'David Perl', hcTarget: 6 },
+  DACH_CORP_OB:{ label: 'DACH Corporate Outbound', color: '#2563eb', managers: ['Patricia Chemnitzer'], mgrShort: 'Patricia Chemnitzer', hcTarget: 5 },
+  EMEA_OB:  { label: 'EMEA Outbound', color: '#F18F01', managers: ['Julien Thuy'], mgrShort: 'Julien Thuy', hcTarget: 7 },
+  AMER_OB:  { label: 'AMER Outbound', color: '#7B2D8E', managers: ['Woojin Shin'], mgrShort: 'Woojin Shin', hcTarget: 7 },
+  APJ_OB:   { label: 'APJ Outbound', color: '#C73E1D', managers: ['Rio Uchida'], mgrShort: 'Rio Uchida', hcTarget: 8 },
+  INBOUND:  { label: 'Inbound', color: '#64748b', managers: ['Danielle Carroll (from Feb)', 'Andy Malliff (interim)'], mgrShort: 'Danielle Carroll', hcTarget: 10 },
+};
+
+// SDR monthly pipeline targets from FY26 Individual Target Summary
+// pipeTarget (pro-rated) and pipeQ1 (full quarter) are auto-calculated from WEEK.ending
+const MONTHLY_PIPE_TARGETS = {
+  'Malvina Muraccioli': { jan:100000, feb:130000, mar:150000 },
+  'Loic Hermabessiere': { jan:100000, feb:130000, mar:150000 },
+  'Marva Hakimi':       { jan:50000,  feb:97000,  mar:150000 },
+  'Casey Arra':         { jan:38000,  feb:73000,  mar:112000 },
+  'Matthew Salisbury':  { jan:75000,  feb:130000, mar:150000 },
+  'Johannes Hounsgaard':{ jan:130000, feb:168000, mar:194000 },
+  'Lucas Durst':        { jan:130000, feb:168000, mar:194000 },
+  'Burak Ayten':        { jan:130000, feb:168000, mar:194000 },
+  'Julian Spretz':      { jan:130000, feb:168000, mar:194000 },
+  'Armin Oesterwind':   { jan:130000, feb:168000, mar:194000 },
+  'Julia Laura Damrath':{ jan:0,      feb:84000,  mar:146000 },
+  'Fabio Ferrauti':     { jan:100000, feb:130000, mar:150000 },
+  'Philip Croes':       { jan:100000, feb:130000, mar:150000 },
+  'Giulio Sudano':      { jan:50000,  feb:97000,  mar:150000 },
+  'Salma Geaissa':      { jan:0,      feb:65000,  mar:112000 },
+  'Andrew Moher':       { jan:99466,  feb:143967, mar:182889 },
+  'Tyler Escamilla':    { jan:114466, feb:162967, mar:204889 },
+  'Richard Lam':        { jan:99466,  feb:143967, mar:182889 },
+  'Gracie Haskell':     { jan:57233,  feb:122725, mar:204889 },
+  'Ryuya Tanida':       { jan:136274, feb:176657, mar:203911 },
+  'Chisako Nukui':      { jan:161274, feb:209657, mar:241911 },
+  'Kai Nakamichi':      { jan:161274, feb:209657, mar:241911 },
+  'Kaho Mizumachi':     { jan:136274, feb:176657, mar:203911 },
+  'Sho Nakazawa':       { jan:161274, feb:209657, mar:241911 },
+  'Lucas Schmalzl':     { jan:187000, feb:243000, mar:280000 },
+  'Oisin Flynn':        { jan:204000, feb:265000, mar:306000 },
+  'Ying Hong':          { jan:125000, feb:243000, mar:373000 },
+  // Pre-loaded — will join SDRS when they appear in activity data
+  'Claire Gilpatrick':  { jan:0,      feb:0,      mar:34000 },
+  'Mayuko Ogisu':       { jan:0,      feb:0,      mar:0 },
+};
+
+// SDR monthly SAO targets from FY26 SAO Target Summary
+// saoT (pro-rated) and saoQ1 (full quarter) are auto-calculated from WEEK.ending
+// SAO targets pro-rate to end of business week (day+2 from Wednesday cut)
+const MONTHLY_SAO_TARGETS = {
+  'Malvina Muraccioli': { jan:8,  feb:10, mar:12 },
+  'Loic Hermabessiere': { jan:6,  feb:8,  mar:9 },
+  'Marva Hakimi':       { jan:4,  feb:6,  mar:9 },
+  'Casey Arra':         { jan:3,  feb:6,  mar:9 },
+  'Matthew Salisbury':  { jan:4,  feb:8,  mar:9 },
+  'Johannes Hounsgaard':{ jan:6,  feb:8,  mar:9 },
+  'Lucas Durst':        { jan:6,  feb:8,  mar:9 },
+  'Burak Ayten':        { jan:6,  feb:8,  mar:9 },
+  'Julian Spretz':      { jan:6,  feb:8,  mar:9 },
+  'Armin Oesterwind':   { jan:6,  feb:8,  mar:9 },
+  'Julia Laura Damrath':{ jan:0,  feb:4,  mar:7 },
+  'Fabio Ferrauti':     { jan:7,  feb:9,  mar:10 },
+  'Philip Croes':       { jan:7,  feb:9,  mar:10 },
+  'Giulio Sudano':      { jan:3,  feb:6,  mar:10 },
+  'Salma Geaissa':      { jan:0,  feb:4,  mar:7 },
+  'Andrew Moher':       { jan:9,  feb:13, mar:17 },
+  'Tyler Escamilla':    { jan:10, feb:15, mar:18 },
+  'Richard Lam':        { jan:9,  feb:13, mar:17 },
+  'Gracie Haskell':     { jan:5,  feb:11, mar:18 },
+  'Ryuya Tanida':       { jan:11, feb:15, mar:17 },
+  'Chisako Nukui':      { jan:13, feb:17, mar:20 },
+  'Kai Nakamichi':      { jan:13, feb:17, mar:20 },
+  'Kaho Mizumachi':     { jan:11, feb:15, mar:17 },
+  'Sho Nakazawa':       { jan:13, feb:17, mar:20 },
+  'Lucas Schmalzl':     { jan:11, feb:14, mar:17 },
+  'Oisin Flynn':        { jan:13, feb:16, mar:19 },
+  'Ying Hong':          { jan:7,  feb:14, mar:21 },
+  // Pre-loaded — will join SDRS when they appear in activity data
+  'Claire Gilpatrick':  { jan:0,  feb:0,  mar:4 },
+  'Mayuko Ogisu':       { jan:0,  feb:0,  mar:0 },
+};
+
+// ============================================================
+// SDR ROSTER — metadata for all known/planned SDRs
+// When a new name appears in the activity report, add them to
+// SDRS below (one line: name + acts + saos + pipe). Targets and
+// metadata auto-populate from the roster and monthly tables.
+// ============================================================
+const SDR_ROSTER = {
+  // EMEA OB — Julien Thuy
+  'Malvina Muraccioli': { bu:'EMEA_OB', region:'EMEA', mgr:'Julien', seg:'CORP' },
+  'Loic Hermabessiere': { bu:'EMEA_OB', region:'EMEA', mgr:'Julien', seg:'ENT' },
+  'Marva Hakimi':       { bu:'EMEA_OB', region:'EMEA', mgr:'Julien', seg:'ENT' },
+  'Casey Arra':         { bu:'EMEA_OB', region:'EMEA', mgr:'Julien', seg:'CORP' },
+  'Matthew Salisbury':  { bu:'EMEA_OB', region:'EMEA', mgr:'Julien', seg:'ENT' },
+  // DACH ENT OB — David Perl
+  'Johannes Hounsgaard':{ bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  'Lucas Durst':        { bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  'Burak Ayten':        { bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  'Julian Spretz':      { bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  'Armin Oesterwind':   { bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  'Julia Laura Damrath':{ bu:'DACH_ENT_OB', region:'DACH', mgr:'David Perl', seg:'ENT' },
+  // DACH CORP OB — Patricia Chemnitzer
+  'Fabio Ferrauti':     { bu:'DACH_CORP_OB', region:'DACH', mgr:'Patricia', seg:'CORP' },
+  'Philip Croes':       { bu:'DACH_CORP_OB', region:'DACH', mgr:'Patricia', seg:'CORP' },
+  'Giulio Sudano':      { bu:'DACH_CORP_OB', region:'DACH', mgr:'Patricia', seg:'CORP' },
+  'Salma Geaissa':      { bu:'DACH_CORP_OB', region:'DACH', mgr:'Patricia', seg:'CORP' },
+  // AMER OB — Woojin Shin
+  'Andrew Moher':       { bu:'AMER_OB', region:'AMER', mgr:'Woojin', seg:'CORP' },
+  'Tyler Escamilla':    { bu:'AMER_OB', region:'AMER', mgr:'Woojin', seg:'ENT' },
+  'Richard Lam':        { bu:'AMER_OB', region:'AMER', mgr:'Woojin', seg:'CORP' },
+  'Gracie Haskell':     { bu:'AMER_OB', region:'AMER', mgr:'Woojin', seg:'ENT' },
+  'Claire Gilpatrick':  { bu:'AMER_OB', region:'AMER', mgr:'Woojin', seg:'CORP' },
+  // APJ OB — Rio Uchida
+  'Ryuya Tanida':       { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'CORP' },
+  'Chisako Nukui':      { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'ENT' },
+  'Kai Nakamichi':      { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'ENT' },
+  'Kaho Mizumachi':     { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'CORP' },
+  'Sho Nakazawa':       { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'ENT' },
+  'Mayuko Ogisu':       { bu:'APJ_OB', region:'APJ', mgr:'Rio', seg:'CORP' },
+  // INBOUND — Andy / Danielle
+  'Lucas Schmalzl':     { bu:'INBOUND', region:'DACH', mgr:'Andy', seg:'All' },
+  'Oisin Flynn':        { bu:'INBOUND', region:'EMEA', mgr:'Andy', seg:'All' },
+  'Ying Hong':          { bu:'INBOUND', region:'DACH', mgr:'Andy', seg:'All' },
+};
+
+// ============================================================
+// ACTIVE SDRs — only name + actuals. Add a line when someone
+// first appears in the Salesloft activity report.
+// Metadata (bu, region, mgr, seg) is merged from SDR_ROSTER.
+// Targets (pipeTarget, pipeQ1, saoT, saoQ1) auto-calculate
+// from MONTHLY_PIPE_TARGETS and MONTHLY_SAO_TARGETS.
+// ============================================================
+const SDRS = [
+  // EMEA OB
+  { name:'Malvina Muraccioli', acts:13380, saos:20, pipe:298000 },
+  { name:'Loic Hermabessiere', acts:1650,  saos:9,  pipe:137000 },
+  { name:'Marva Hakimi',       acts:5220,  saos:6,  pipe:148000 },
+  { name:'Casey Arra',         acts:1820,  saos:1,  pipe:1500 },
+  { name:'Matthew Salisbury',  acts:650,   saos:1,  pipe:76000 },
+  // DACH ENT OB
+  { name:'Johannes Hounsgaard',acts:2350,  saos:13, pipe:230000 },
+  { name:'Lucas Durst',        acts:850,   saos:6,  pipe:176000 },
+  { name:'Burak Ayten',        acts:1740,  saos:3,  pipe:43000 },
+  { name:'Julian Spretz',      acts:230,   saos:2,  pipe:23000 },
+  { name:'Armin Oesterwind',   acts:760,   saos:1,  pipe:17000 },
+  { name:'Julia Laura Damrath',acts:430,   saos:0,  pipe:0 },
+  // DACH CORP OB
+  { name:'Fabio Ferrauti',     acts:460,   saos:6,  pipe:91000 },
+  { name:'Philip Croes',       acts:370,   saos:3,  pipe:26000 },
+  { name:'Giulio Sudano',      acts:180,   saos:0,  pipe:0 },
+  { name:'Salma Geaissa',      acts:380,   saos:0,  pipe:0 },
+  // AMER OB
+  { name:'Andrew Moher',       acts:1330,  saos:12, pipe:55000 },
+  { name:'Tyler Escamilla',    acts:1500,  saos:7,  pipe:163000 },
+  { name:'Richard Lam',        acts:1160,  saos:4,  pipe:15000 },
+  { name:'Gracie Haskell',     acts:3100,  saos:4,  pipe:14000 },
+  // APJ OB
+  { name:'Ryuya Tanida',       acts:5200,  saos:25, pipe:349000 },
+  { name:'Chisako Nukui',      acts:6100,  saos:17, pipe:227000 },
+  { name:'Kai Nakamichi',      acts:3900,  saos:13, pipe:185000 },
+  { name:'Kaho Mizumachi',     acts:1610,  saos:6,  pipe:30000 },
+  { name:'Sho Nakazawa',       acts:620,   saos:10, pipe:132000 },
+  // INBOUND
+  { name:'Lucas Schmalzl',     acts:3270,  saos:23, pipe:202000 },
+  { name:'Oisin Flynn',        acts:7370,  saos:5,  pipe:77000 },
+  { name:'Ying Hong',          acts:3070,  saos:2,  pipe:13300 },
+];
+
+// Merge roster metadata into each SDR
+SDRS.forEach(s => {
+  const r = SDR_ROSTER[s.name];
+  if (r) { s.bu = r.bu; s.region = r.region; s.mgr = r.mgr; s.seg = r.seg; }
+});
+
+// Pipeline from departed/promoted SDRs — counts toward BU totals but not individual performance
+
+// Week 5 (ending 5 Feb) activity per SDR — from Salesloft report 09-Feb-2026
+const LAST_WEEK_ACTS = {
+  'Andrew Moher': 330, 'Armin Oesterwind': 10, 'Burak Ayten': 440,
+  'Casey Arra': 320, 'Chisako Nukui': 1200, 'Fabio Ferrauti': 110,
+  'Giulio Sudano': 30, 'Gracie Haskell': 1300, 'Johannes Hounsgaard': 550,
+  'Julia Laura Damrath': 30, 'Julian Spretz': 180, 'Kaho Mizumachi': 510,
+  'Kai Nakamichi': 900, 'Loic Hermabessiere': 250, 'Lucas Durst': 350,
+  'Lucas Schmalzl': 570, 'Malvina Muraccioli': 2580, 'Marva Hakimi': 1220,
+  'Matthew Salisbury': 300, 'Oisin Flynn': 2470, 'Philip Croes': 70,
+  'Richard Lam': 60, 'Ryuya Tanida': 900, 'Salma Geaissa': 30,
+  'Sho Nakazawa': 270, 'Tyler Escamilla': 200, 'Ying Hong': 370,
+};
+
+// Previous week data for WoW (Week 4 ending 29 Jan — estimated from cumulative split)
+// Includes departed SDR pipeline contribution (Erick, Daniel, Lukas P were already gone by W4)
+const PREV_WEEK = {
+  totalPipe: 2682000,
+  totalSAOs: 168,
+  totalActs: 53050,
+  activeSDRs: 27,
+  onTrack: 9,
+  // Zone counts reset for W5 — methodology changed from activity-led to outcome-led
+  zoneActivity: 0,
+  zoneConversion: 0,
+  zoneDealSize: 0,
+  zoneOnTrack: 0,
+  zoneExceeding: 0,
+  zoneRamping: 0,
+};
+
+// Previous week (W4) per-BU pipeline & SAO totals for trend arrows
+// Derived from prior Salesforce snapshot before 09-Feb update
+const PREV_BU = {
+  EMEA_OB:      { pipe: 675000,  saos: 34 },   // Active 617.5k + departed 57.5k
+  DACH_ENT_OB:  { pipe: 474000,  saos: 22 },   // Johannes 230k, Lucas D 161k, Burak 43k, Julian 23k, Armin 17k
+  DACH_CORP_OB: { pipe: 117000,  saos: 8 },    // Fabio 91k, Philip 26k, Giulio 0, Salma 0
+  AMER_OB:      { pipe: 605100,  saos: 22 },   // Active 160.1k + departed 445k
+  APJ_OB:       { pipe: 686000,  saos: 59 },   // Ryuya 347k, Chisako 161k, Kai 154k, Kaho 24k (no Sho)
+  INBOUND:      { pipe: 221800,  saos: 23 },   // Lucas S 202k, Oisin 16k, Ying 3.8k
+};
+
+// Previous week (W4) per-region pipeline & SAO totals — now computed dynamically in renderRegions() from WEEK_HISTORY
+
+// Weeks-in-zone tracking: how many consecutive weeks each SDR has been in their current zone
+// Update weekly: if zone unchanged, increment; if zone changed, reset to 1
+// W5 is first week of new methodology, so everyone starts at 1
+const PREV_ZONES = {
+  'Malvina Muraccioli': { zone: 'exceeding', weeks: 1 },
+  'Loic Hermabessiere': { zone: 'on_track', weeks: 1 },
+  'Marva Hakimi': { zone: 'ramping', weeks: 1 },
+  'Casey Arra': { zone: 'ramping', weeks: 1 },
+  'Matthew Salisbury': { zone: 'ramping', weeks: 1 },
+  'Johannes Hounsgaard': { zone: 'exceeding', weeks: 1 },
+  'Lucas Durst': { zone: 'on_track', weeks: 1 },
+  'Burak Ayten': { zone: 'activity', weeks: 1 },
+  'Julian Spretz': { zone: 'activity', weeks: 1 },
+  'Armin Oesterwind': { zone: 'activity', weeks: 1 },
+  'Julia Laura Damrath': { zone: 'ramping', weeks: 1 },
+  'Fabio Ferrauti': { zone: 'activity', weeks: 1 },
+  'Philip Croes': { zone: 'activity', weeks: 1 },
+  'Giulio Sudano': { zone: 'ramping', weeks: 1 },
+  'Salma Geaissa': { zone: 'ramping', weeks: 1 },
+  'Andrew Moher': { zone: 'deal_size', weeks: 1 },
+  'Tyler Escamilla': { zone: 'conversion', weeks: 1 },
+  'Richard Lam': { zone: 'conversion', weeks: 1 },
+  'Gracie Haskell': { zone: 'ramping', weeks: 1 },
+  'Ryuya Tanida': { zone: 'exceeding', weeks: 1 },
+  'Chisako Nukui': { zone: 'on_track', weeks: 1 },
+  'Kai Nakamichi': { zone: 'on_track', weeks: 1 },
+  'Kaho Mizumachi': { zone: 'activity', weeks: 1 },
+  'Sho Nakazawa': { zone: 'on_track', weeks: 1 },
+  'Lucas Schmalzl': { zone: 'on_track', weeks: 1 },
+  'Oisin Flynn': { zone: 'conversion', weeks: 1 },
+  'Ying Hong': { zone: 'ramping', weeks: 1 },
+};
+
+// ============================================================
+// WEEK HIGHLIGHTS — update each week with top 5 celebrations
+// emoji: card icon · name: person or team · title: short label
+// stat: big number/metric · detail: context sentence
+// ============================================================
+const HIGHLIGHTS = [
+  { emoji:'🚀', name:'Tyler E.', title:'Pipeline Breakout', stat:'+€80k this week', detail:'Doubled from €83k to €163k. Biggest single-week pipeline jump across the org.' },
+  { emoji:'📈', name:'Oisin F.', title:'Inbound Surge', stat:'+€61k pipeline', detail:'€16k → €77k in one week. Inbound EMEA pipeline building real momentum.' },
+  { emoji:'🏆', name:'Ryuya T.', title:'Quarterly Target in Sight', stat:'€349k (208%)', detail:'Already at 208% of pro-rated pipeline target with 8 weeks still to go.' },
+  { emoji:'🎯', name:'Johannes H.', title:'SAO Machine', stat:'13 vs 8 target', detail:'163% SAO attainment. Leading DACH Enterprise volume from the front.' },
+  { emoji:'⚡', name:'Malvina M.', title:'Activity Champion', stat:'2,580 acts/week', detail:'5x the org median. Setting the standard for outbound activity levels.' },
+];
+
+const WE = WEEK.weeksElapsed;
+
+// ============================================================
+// TREND DATA — weekly cumulative actuals by BU
+// Update each Friday alongside SDRS actuals.
+// For region view: IB_DACH and IB_EMEA split Inbound by geography.
+// Region calc: DACH = DACH_ENT_OB + DACH_CORP_OB + IB_DACH
+//              EMEA = EMEA_OB + IB_EMEA
+//              AMER = AMER_OB, APJ = APJ_OB
+// ============================================================
+const WEEKS_DEF = [
+  { n:1,  ending:'2026-01-08' }, { n:2,  ending:'2026-01-15' },
+  { n:3,  ending:'2026-01-22' }, { n:4,  ending:'2026-01-29' },
+  { n:5,  ending:'2026-02-05' }, { n:6,  ending:'2026-02-12' },
+  { n:7,  ending:'2026-02-19' }, { n:8,  ending:'2026-02-26' },
+  { n:9,  ending:'2026-03-05' }, { n:10, ending:'2026-03-12' },
+  { n:11, ending:'2026-03-19' }, { n:12, ending:'2026-03-26' },
+  { n:13, ending:'2026-03-31' },
+];
+
+// Cumulative actuals per week — pipe in € and saos as count
+// Populated from Salesforce + Salesloft snapshots each Friday
+const WEEK_HISTORY = [
+  { week:1, // ending 8 Jan
+    EMEA_OB:{pipe:63700,saos:7}, DACH_ENT_OB:{pipe:51600,saos:5}, DACH_CORP_OB:{pipe:6700,saos:1},
+    AMER_OB:{pipe:11600,saos:5}, APJ_OB:{pipe:292500,saos:17}, INBOUND:{pipe:21000,saos:4},
+    IB_DACH:{pipe:18000,saos:2}, IB_EMEA:{pipe:3000,saos:2} },
+  { week:2, // ending 15 Jan
+    EMEA_OB:{pipe:400700,saos:22}, DACH_ENT_OB:{pipe:269600,saos:13}, DACH_CORP_OB:{pipe:11700,saos:7},
+    AMER_OB:{pipe:102900,saos:15}, APJ_OB:{pipe:378600,saos:27}, INBOUND:{pipe:71000,saos:9},
+    IB_DACH:{pipe:68000,saos:7}, IB_EMEA:{pipe:3000,saos:2} },
+  { week:3, // ending 22 Jan
+    EMEA_OB:{pipe:580700,saos:33}, DACH_ENT_OB:{pipe:319600,saos:15}, DACH_CORP_OB:{pipe:39500,saos:9},
+    AMER_OB:{pipe:114400,saos:20}, APJ_OB:{pipe:505200,saos:41}, INBOUND:{pipe:155000,saos:15},
+    IB_DACH:{pipe:152000,saos:13}, IB_EMEA:{pipe:3000,saos:2} },
+  { week:4, // ending 29 Jan
+    EMEA_OB:{pipe:617700,saos:35}, DACH_ENT_OB:{pipe:348600,saos:18}, DACH_CORP_OB:{pipe:39500,saos:9},
+    AMER_OB:{pipe:574000,saos:23}, APJ_OB:{pipe:508500,saos:42}, INBOUND:{pipe:155000,saos:15},
+    IB_DACH:{pipe:152000,saos:13}, IB_EMEA:{pipe:3000,saos:2} },
+  { week:5, // ending 5 Feb
+    EMEA_OB:{pipe:735700,saos:46}, DACH_ENT_OB:{pipe:518600,saos:25}, DACH_CORP_OB:{pipe:130500,saos:13},
+    AMER_OB:{pipe:646100,saos:32}, APJ_OB:{pipe:900500,saos:78}, INBOUND:{pipe:216300,saos:26},
+    IB_DACH:{pipe:177300,saos:20}, IB_EMEA:{pipe:39000,saos:6} },
+];
+
+// Per-SDR single-week pipeline (EUR) from Salesforce "Pipeline Last Week" reports
+// Used for real trend curves; scaled to match authoritative W5 cumulative in SDRS array
+const SDR_WEEK_HISTORY = {
+  // [w1, w2, w3, w4, w5] — single-week pipe values
+  // EMEA OB
+  'Malvina Muraccioli':  [31000,97000,52000,25000,74000],
+  'Loic Hermabessiere':  [25000,44000,53000,12000,2500],
+  'Marva Hakimi':        [0,120000,25000,0,40000],
+  'Casey Arra':          [0,0,0,0,1500],
+  'Matthew Salisbury':   [0,76000,0,0,0],
+  // DACH ENT OB
+  'Johannes Hounsgaard': [7600,177000,0,11000,79000],
+  'Lucas Durst':         [0,25000,50000,0,86000],
+  'Burak Ayten':         [27000,16000,0,0,0],
+  'Julian Spretz':       [0,0,0,18000,5000],
+  'Armin Oesterwind':    [17000,0,0,0,0],
+  'Julia Laura Damrath': [0,0,0,0,0],
+  // DACH CORP OB
+  'Fabio Ferrauti':      [6700,5000,18000,0,61000],
+  'Philip Croes':        [0,0,9800,0,16000],
+  'Giulio Sudano':       [0,0,0,0,0],
+  'Salma Geaissa':       [0,0,0,0,0],
+  // AMER OB
+  'Andrew Moher':        [4700,3200,8800,7600,31000],
+  'Tyler Escamilla':     [0,83000,0,0,34000],
+  'Richard Lam':         [2400,254,221,12000,0],
+  'Gracie Haskell':      [0,4500,2500,0,7100],
+  // APJ OB
+  'Ryuya Tanida':        [126000,29000,65000,3300,127000],
+  'Chisako Nukui':       [40000,0,30000,0,157000],
+  'Kai Nakamichi':       [75000,13000,2500,0,69000],
+  'Kaho Mizumachi':      [2500,5100,3100,0,19000],
+  'Sho Nakazawa':        [49000,39000,26000,0,20000],
+  // INBOUND (Lucas Schmalzl combines IB + DACH CORP attribution)
+  'Lucas Schmalzl':      [18000,67000,84000,0,33000],
+  'Oisin Flynn':         [3000,0,0,0,36000],
+  'Ying Hong':           [0,0,0,0,6300],
+};
+
+// Per-SDR single-week SAO counts from Salesforce "SAOs Last Week" reports
+// Populate with [w1, w2, w3, w4, w5] arrays as screenshots are provided
+// Leave null until data is available — arrows will activate automatically
+const SDR_SAO_HISTORY = {
+  // [w1, w2, w3, w4, w5] — single-week SAO counts from Salesforce
+  // EMEA OB
+  'Malvina Muraccioli':  [1,7,5,1,8],
+  'Loic Hermabessiere':  [1,3,3,1,1],
+  'Marva Hakimi':        [0,4,2,0,1],
+  'Casey Arra':          [0,0,0,0,1],
+  'Matthew Salisbury':   [0,1,0,0,0],
+  // DACH ENT OB
+  'Johannes Hounsgaard': [2,6,1,2,3],
+  'Lucas Durst':         [0,1,2,0,3],
+  'Burak Ayten':         [2,6,0,0,0],
+  'Julian Spretz':       [0,0,0,1,1],
+  'Armin Oesterwind':    [1,0,0,0,0],
+  'Julia Laura Damrath': [0,0,0,0,0],
+  // DACH CORP OB
+  'Fabio Ferrauti':      [1,2,1,0,2],
+  'Philip Croes':        [0,0,1,0,1],
+  'Giulio Sudano':       [0,0,0,0,0],
+  'Salma Geaissa':       [0,0,0,0,0],
+  // AMER OB
+  'Andrew Moher':        [2,1,4,2,5],
+  'Tyler Escamilla':     [0,1,0,0,2],
+  'Richard Lam':         [1,1,1,1,0],
+  'Gracie Haskell':      [0,1,1,0,2],
+  // APJ OB
+  'Ryuya Tanida':        [3,4,1,1,8],
+  'Chisako Nukui':       [5,0,2,0,11],
+  'Kai Nakamichi':       [3,1,1,1,5],
+  'Kaho Mizumachi':      [1,1,1,0,5],
+  'Sho Nakazawa':        [5,4,7,0,9],
+  // INBOUND (Lucas Schmalzl combines IB + DACH CORP attribution)
+  'Lucas Schmalzl':      [2,9,6,0,5],
+  'Oisin Flynn':         [2,0,0,0,5],
+  'Ying Hong':           [0,0,0,0,2],
+};
+
+// Per-SDR single-week activity counts from Salesloft weekly reports
+// Populate with [w1, w2, w3, w4, w5] arrays as screenshots are provided
+// Leave null until data is available — arrows will activate automatically
+const SDR_ACT_HISTORY = {
+  // [w1, w2, w3, w4, w5] — single-week activity counts from Salesforce
+  // EMEA OB
+  'Malvina Muraccioli':  [3100,2600,2600,2500,2600],
+  'Loic Hermabessiere':  [59,816,413,301,207],
+  'Marva Hakimi':        [1700,1200,1100,226,1200],
+  'Casey Arra':          [1,222,494,788,340],
+  'Matthew Salisbury':   [8,40,278,86,286],
+  // DACH ENT OB
+  'Johannes Hounsgaard': [215,236,770,716,552],
+  'Lucas Durst':         [69,191,260,56,334],
+  'Burak Ayten':         [113,653,445,110,448],
+  'Julian Spretz':       [126,101,1,7,178],
+  'Armin Oesterwind':    [395,348,115,3,7],
+  'Julia Laura Damrath': [2,2,152,0,23],
+  // DACH CORP OB
+  'Fabio Ferrauti':      [73,369,29,4,129],
+  'Philip Croes':        [148,189,57,3,90],
+  'Giulio Sudano':       [62,75,162,10,37],
+  'Salma Geaissa':       [0,1,0,0,46],
+  // AMER OB
+  'Andrew Moher':        [371,413,161,84,336],
+  'Tyler Escamilla':     [246,182,351,163,201],
+  'Richard Lam':         [417,282,281,97,81],
+  'Gracie Haskell':      [82,149,162,437,1300],
+  // APJ OB
+  'Ryuya Tanida':        [615,944,1400,1400,919],
+  'Chisako Nukui':       [124,1000,2100,1700,1200],
+  'Kai Nakamichi':       [770,1000,454,839,911],
+  'Kaho Mizumachi':      [0,62,571,418,510],
+  'Sho Nakazawa':        [95,140,171,39,264],
+  // INBOUND
+  'Lucas Schmalzl':      [52,984,998,789,568],
+  'Oisin Flynn':         [568,964,2600,0,2500],
+  'Ying Hong':           [16,1500,570,624,344],
+};
+
+// Departed/promoted SDR contribution — auto-computed as W5 snapshot minus active SDRS array
+// This ensures aggregate totals always match the weekly snapshot while individual view stays clean
+const SNAPSHOT_W5 = WEEK_HISTORY[WEEK_HISTORY.length - 1]; // latest week
+const DEPARTED = {};
+const ALL_BUS = ['EMEA_OB','DACH_ENT_OB','DACH_CORP_OB','AMER_OB','APJ_OB','INBOUND'];
+ALL_BUS.forEach(bu => {
+  const sdrsInBU = SDRS.filter(s => { const r = SDR_ROSTER[s.name]; return r && r.bu === bu; });
+  const sdrPipe = sdrsInBU.reduce((s,d) => s + d.pipe, 0);
+  const sdrSaos = sdrsInBU.reduce((s,d) => s + d.saos, 0);
+  const snapPipe = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].pipe : 0;
+  const snapSaos = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].saos : 0;
+  const gapPipe = snapPipe - sdrPipe;
+  const gapSaos = snapSaos - sdrSaos;
+  if (gapPipe !== 0 || gapSaos !== 0) DEPARTED[bu] = { pipe: gapPipe, saos: gapSaos };
+});
+
+// Helper: get snapshot totals for a given scope (BU key, region, or 'GLOBAL')
+function snapshotTotal(scope) {
+  const w = SNAPSHOT_W5;
+  if (!scope || scope === 'GLOBAL' || scope === 'ALL') {
+    return { pipe: ALL_BUS.reduce((s,bu) => s + (w[bu]?w[bu].pipe:0), 0),
+             saos: ALL_BUS.reduce((s,bu) => s + (w[bu]?w[bu].saos:0), 0) };
+  }
+  if (scope.startsWith('R_')) {
+    const reg = scope.replace('R_','');
+    const map = { DACH:['DACH_ENT_OB','DACH_CORP_OB'], EMEA:['EMEA_OB'], AMER:['AMER_OB'], APJ:['APJ_OB'] };
+    const bus = map[reg] || [];
+    const ibKey = 'IB_' + reg;
+    let p = bus.reduce((s,b) => s + (w[b]?w[b].pipe:0), 0) + (w[ibKey]?w[ibKey].pipe:0);
+    let sa = bus.reduce((s,b) => s + (w[b]?w[b].saos:0), 0) + (w[ibKey]?w[ibKey].saos:0);
+    return { pipe: p, saos: sa };
+  }
+  return { pipe: w[scope]?w[scope].pipe:0, saos: w[scope]?w[scope].saos:0 };
+}
+
+// Auto-calculate pipeTarget (pro-rated) and pipeQ1 (full quarter) from WEEK.ending
+// Also saoT (pro-rated) and saoQ1 (full quarter)
+// SAO targets pro-rate to end of business week (day+2) because SAOs count through Friday
+(() => {
+  const d = new Date(WEEK.ending + 'T00:00:00');
+  const month = d.getMonth(); // 0=Jan, 1=Feb, 2=Mar
+  const day = d.getDate();
+  const saoDay = Math.min(day + 2, new Date(d.getFullYear(), month + 1, 0).getDate()); // +2 capped at month end
+  const daysInMonth = new Date(d.getFullYear(), month + 1, 0).getDate(); // 28/31
+
+  function prorate(t, useDay) {
+    if (month === 0)      return Math.round((useDay / daysInMonth) * t.jan);
+    else if (month === 1) return Math.round(t.jan + (useDay / daysInMonth) * t.feb);
+    else                  return Math.round(t.jan + t.feb + (useDay / daysInMonth) * t.mar);
+  }
+
+  SDRS.forEach(s => {
+    // Pipeline targets
+    const pt = MONTHLY_PIPE_TARGETS[s.name];
+    if (!pt) { s.pipeTarget = 0; s.pipeQ1 = 0; }
+    else { s.pipeQ1 = pt.jan + pt.feb + pt.mar; s.pipeTarget = prorate(pt, day); }
+    // SAO targets
+    const st = MONTHLY_SAO_TARGETS[s.name];
+    if (!st) { s.saoT = 0; s.saoQ1 = 0; }
+    else { s.saoQ1 = st.jan + st.feb + st.mar; s.saoT = prorate(st, saoDay); }
+  });
+})();
+
+// Derived fields
+SDRS.forEach(s => {
+  s.saoPct = s.saoT > 0 ? (s.saos / s.saoT) * 100 : 0;
+  s.weekly = s.acts != null ? Math.round(s.acts / WE) : null;
+  s.efficiency = (s.acts && s.saos > 0) ? Math.round(s.acts / s.saos) : null;
+  s.onTrack = s.saoPct >= 75;
+  s.pipePct = s.pipeTarget > 0 ? (s.pipe / s.pipeTarget) * 100 : 0;
+  s.pipeGap = Math.max(0, s.pipeTarget - s.pipe);
+  s.pipeWeeklyNeeded = WEEK.weeksRemaining > 0 ? Math.round(s.pipeGap / WEEK.weeksRemaining) : 0;
+
+  // WoW single-week comparisons (activates arrows when history arrays are populated)
+  // SAO: compare this week's single-week SAOs vs last week's
+  const saoH = SDR_SAO_HISTORY[s.name];
+  if (saoH && saoH.length >= 2) {
+    s._saoThisWk = saoH[saoH.length - 1];
+    s._saoLastWk = saoH[saoH.length - 2];
+  }
+  // Activity: compare this week's single-week acts vs last week's
+  const actH = SDR_ACT_HISTORY[s.name];
+  if (actH && actH.length >= 2) {
+    s._actThisWk = actH[actH.length - 1];
+    s._actLastWk = actH[actH.length - 2];
+  }
+  // Efficiency: compare single-week acts/SAO (lower is better, so arrow inverted)
+  if (s._saoThisWk > 0 && s._actThisWk != null && s._saoLastWk > 0 && s._actLastWk != null) {
+    s._effThisWk = Math.round(s._actThisWk / s._saoThisWk);
+    s._effLastWk = Math.round(s._actLastWk / s._saoLastWk);
+  }
+});
+
+// Compute Ramp vs Full: compare pipeTarget to max within same BU + segment
+// Ramp = target is ~0%, ~50%, or ~75% of the segment max (±10% tolerance)
+(() => {
+  const groups = {};
+  SDRS.forEach(s => {
+    const key = s.bu + '|' + s.seg;
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(s);
+  });
+  Object.values(groups).forEach(arr => {
+    const mx = Math.max(...arr.map(s => s.pipeTarget));
+    arr.forEach(s => {
+      const ratio = mx > 0 ? s.pipeTarget / mx : 1;
+      const isRamp = [0, 0.50, 0.75].some(r => Math.abs(ratio - r) <= 0.10);
+      s.type = isRamp ? 'Ramp' : 'Full';
+    });
+  });
+})();
+
+// Outcome-led status zones (assigned after ramp detection)
+SDRS.forEach(s => {
+  if (s.type === 'Ramp') s.zone = 'ramping';
+  else if (s.pipePct >= 90 && s.saoPct >= 75) s.zone = 'exceeding';
+  else if (s.pipePct >= 50 && s.saoPct >= 50) s.zone = 'on_track';
+  else if (s.saoPct >= 75 && s.pipePct < 50) s.zone = 'deal_size';
+  else if ((s.weekly||0) >= 200 && s.saoPct < 50) s.zone = 'conversion';
+  else s.zone = 'activity';
+
+  // Weeks-in-zone: compare to PREV_ZONES and increment or reset
+  const prev = PREV_ZONES[s.name];
+  s.weeksInZone = (prev && prev.zone === s.zone) ? prev.weeks + 1 : 1;
+
+  // Activity trend: compare last week to their personal average
+  const lastWk = LAST_WEEK_ACTS[s.name] || null;
+  const avgWk = s.weekly || 0;
+  if (lastWk !== null && avgWk > 0) {
+    const delta = lastWk - avgWk;
+    const deltaPct = Math.round((delta / avgWk) * 100);
+    s.actTrend = { lastWk, avgWk, delta, deltaPct };
+  } else {
+    s.actTrend = null;
+  }
+});
+
+// ============================================================
+// UTILS
+// ============================================================
+function eur(v) { if (v == null) return '—'; return '€' + (v >= 1000000 ? (v/1000000).toFixed(2)+'M' : v >= 1000 ? Math.round(v/1000)+'k' : v); }
+function eurShort(v) { if (v == null) return '—'; return '€' + (v >= 1000000 ? (v/1000000).toFixed(1)+'M' : v >= 1000 ? Math.round(v/1000)+'k' : v); }
+function pct(v) { return v.toFixed(0) + '%'; }
+function firstName(n) { const p = n.split(' '); return p[0] + ' ' + p[p.length - 1][0] + '.'; }
+function shortName(n) { const p = n.split(' '); return p[0] + ' ' + p[p.length-1][0] + '.'; }
+function zoneLabel(z) { return {exceeding:'✅ Exceeding',on_track:'On Track',deal_size:'⚠️ Deal Size',conversion:'⚠️ Conversion',activity:'🔴 Activity Gap',ramping:'🔵 Ramping'}[z]||'—'; }
+function zoneColor(z) { return {exceeding:'#16a34a',on_track:'#65a30d',deal_size:'#d97706',conversion:'#d97706',activity:'#dc2626',ramping:'#2563eb'}[z]||'#94a3b8'; }
+function zoneBg(z) { return {exceeding:'#f0fdf4',on_track:'#f7fee7',deal_size:'#fffbeb',conversion:'#fffbeb',activity:'#fef2f2',ramping:'#eff6ff'}[z]||'#f8fafc'; }
+function zoneBorder(z) { return {exceeding:'#bbf7d0',on_track:'#d9f99d',deal_size:'#fde68a',conversion:'#fde68a',activity:'#fecaca',ramping:'#bfdbfe'}[z]||'#e2e8f0'; }
+function saoTagClass(p) { return p >= 100 ? 'tag-green' : p >= 75 ? 'tag-lime' : p >= 50 ? 'tag-amber' : 'tag-red'; }
+function pipeTagClass(p) { return p >= 90 ? 'tag-green' : p >= 50 ? 'tag-amber' : 'tag-red'; }
+function attColor(p) { return p >= 90 ? '#16a34a' : p >= 70 ? '#d97706' : '#dc2626'; }
+
+// ============================================================
+// 1. GLOBAL KPIs
+// ============================================================
+function renderGlobalKPIs() {
+  const snap = snapshotTotal('GLOBAL');
+  const totalPipe = snap.pipe;
+  const totalSAO = snap.saos;
+  const totalPipePR = SDRS.reduce((s,d) => s + d.pipeTarget, 0);
+  const totalSaoPR = SDRS.reduce((s,d) => s + d.saoT, 0);
+  const pA = totalPipePR > 0 ? totalPipe/totalPipePR*100 : 0;
+  const sA = totalSaoPR > 0 ? totalSAO/totalSaoPR*100 : 0;
+  const active = SDRS.filter(s => s.acts != null).length;
+  const avgP = active > 0 ? totalPipe / active : 0;
+  const wkVals = SDRS.filter(s => s.weekly != null).map(s => s.weekly).sort((a,b) => a-b);
+  const med = wkVals[Math.floor(wkVals.length/2)] || 0;
+  const onT = SDRS.filter(s => s.onTrack).length;
+  const oR = SDRS.length > 0 ? onT/SDRS.length*100 : 0;
+
+  // Avg Pipeline / SDR — pro-rated against €430k/quarter target
+  const qTarget = 430000;
+  const proRatedTarget = qTarget * (WE / WEEK.totalWeeks);
+  const avgPctOfTarget = proRatedTarget > 0 ? avgP / proRatedTarget * 100 : 0;
+  const prevAvgP = PREV_WEEK.totalPipe / (PREV_WEEK.activeSDRs || active);
+  const prevProRated = qTarget * ((WE - 1) / WEEK.totalWeeks);
+  const prevAvgPct = prevProRated > 0 ? prevAvgP / prevProRated * 100 : 0;
+  const avgTrend = avgPctOfTarget - prevAvgPct;
+  const trendLabel = avgTrend > 2 ? 'Improving' : avgTrend < -2 ? 'Slipping' : 'Steady';
+  const trendClass = avgTrend > 2 ? 'up' : avgTrend < -2 ? 'down' : 'flat';
+
+  document.getElementById('globalKpis').innerHTML = `
+    <div class="kpi ${pA>=90?'green':pA>=70?'amber':'red'}"><div class="kpi-label">Pipeline</div><div class="kpi-value">${eurShort(totalPipe)}</div><div class="kpi-target">of ${eurShort(totalPipePR)} target</div><div class="kpi-delta ${pA>=90?'up':pA>=70?'amber':'down'}">${pct(pA)} attainment</div></div>
+    <div class="kpi ${sA>=90?'green':sA>=70?'amber':'red'}"><div class="kpi-label">SAO</div><div class="kpi-value">${totalSAO}</div><div class="kpi-target">of ${totalSaoPR} target</div><div class="kpi-delta ${sA>=90?'up':sA>=70?'amber':'down'}">${pct(sA)} attainment</div></div>
+    <div class="kpi ${active>=43?'green':active>=35?'amber':'red'}"><div class="kpi-label">Active SDRs</div><div class="kpi-value">${active}</div><div class="kpi-target">of 43 target headcount</div><div class="kpi-delta ${active>=43?'up':active>=35?'amber':'down'}">${pct(active/43*100)} staffed</div></div>
+    <div class="kpi ${avgPctOfTarget>=90?'green':avgPctOfTarget>=70?'amber':'red'}"><div class="kpi-label">Avg Pipeline / SDR</div><div class="kpi-value">${eurShort(Math.round(avgP))}</div><div class="kpi-target">of ${eurShort(Math.round(proRatedTarget))} target (€430k/qtr)</div><div class="kpi-delta ${avgPctOfTarget>=90?'up':avgPctOfTarget>=70?'amber':'down'}">${pct(avgPctOfTarget)} on-pace · ${trendLabel}</div></div>
+    <div class="kpi ${med>=500?'green':med>=350?'amber':'red'}"><div class="kpi-label">Median Activity / Wk</div><div class="kpi-value">${med}</div><div class="kpi-target">of 500 target</div><div class="kpi-delta ${med>=500?'up':med>=350?'amber':'down'}">${pct(med/500*100)} of target</div></div>
+    <div class="kpi ${oR>=50?'green':'amber'}"><div class="kpi-label">On-track SAO</div><div class="kpi-value">${onT} / ${SDRS.length}</div><div class="kpi-target">≥75% SAO attainment</div><div class="kpi-delta ${oR>=50?'up':'amber'}">${pct(oR)} on-track</div></div>`;
+}
+
+// ============================================================
+// 2. WEEK-ON-WEEK CHANGES
+// ============================================================
+function renderWoW() {
+  const snap = snapshotTotal('GLOBAL');
+  const cur = {
+    totalPipe: snap.pipe,
+    totalSAOs: snap.saos,
+    totalActs: SDRS.reduce((s,d)=>s+(d.acts||0),0),
+    onTrack: SDRS.filter(s=>s.onTrack).length,
+  };
+  const prev = PREV_WEEK;
+  const dPipe = cur.totalPipe - prev.totalPipe;
+  const dSAO = cur.totalSAOs - prev.totalSAOs;
+  const dActs = cur.totalActs - prev.totalActs;
+  const dOnT = cur.onTrack - prev.onTrack;
+
+  const zoneNow = {activity:0,conversion:0,deal_size:0,on_track:0,exceeding:0,ramping:0};
+  SDRS.forEach(s => { if(zoneNow[s.zone] !== undefined) zoneNow[s.zone]++; });
+  const zD = {
+    activity: zoneNow.activity - prev.zoneActivity,
+    conversion: zoneNow.conversion - prev.zoneConversion,
+    deal_size: zoneNow.deal_size - prev.zoneDealSize,
+    on_track: zoneNow.on_track - prev.zoneOnTrack,
+    exceeding: zoneNow.exceeding - prev.zoneExceeding,
+    ramping: zoneNow.ramping - prev.zoneRamping,
+  };
+
+  const zMoves = [];
+  if (zD.exceeding > 0) zMoves.push(`<span style="color:#16a34a">+${zD.exceeding} Exceeding</span>`);
+  if (zD.on_track > 0) zMoves.push(`<span style="color:#65a30d">+${zD.on_track} On Track</span>`);
+  if (zD.activity < 0) zMoves.push(`<span style="color:#16a34a">${zD.activity} Activity Gap</span>`);
+  if (zD.activity > 0) zMoves.push(`<span style="color:#dc2626">+${zD.activity} Activity Gap</span>`);
+  if (zD.exceeding < 0) zMoves.push(`<span style="color:#dc2626">${zD.exceeding} Exceeding</span>`);
+
+  document.getElementById('wowSub').textContent = 'Comparing Week 5 vs Week 4 (ending 29 Jan)';
+
+  // Median activity calculation: Jan weekly avg vs last week
+  const median = arr => { const s = [...arr].sort((a,b)=>a-b); const m = Math.floor(s.length/2); return s.length%2 ? s[m] : Math.round((s[m-1]+s[m])/2); };
+  const janWeekly = SDRS.map(s => {
+    const lw = LAST_WEEK_ACTS[s.name] || 0;
+    const janTotal = Math.max(0, (s.acts||0) - lw);
+    return Math.round(janTotal / 4);
+  });
+  const lwActs = SDRS.map(s => LAST_WEEK_ACTS[s.name] || 0);
+  const medJan = median(janWeekly);
+  const medLW = median(lwActs);
+  const dMed = medLW - medJan;
+
+  document.getElementById('wowGrid').innerHTML = `
+    <div class="wow-card">
+      <div class="wow-card-title">Pipeline Added This Week</div>
+      <div class="wow-main" style="color:${dPipe>=0?'#16a34a':'#dc2626'}">${dPipe>=0?'+':''}${eurShort(dPipe)}</div>
+      <div class="wow-detail">Cumulative now ${eurShort(cur.totalPipe)}</div>
+      <div class="wow-tag ${dPipe>=0?'pos':'neg'}">${eurShort(Math.round(dPipe/1))} in the week</div>
+    </div>
+    <div class="wow-card">
+      <div class="wow-card-title">SAO Closed This Week</div>
+      <div class="wow-main" style="color:${dSAO>=0?'#16a34a':'#dc2626'}">+${dSAO}</div>
+      <div class="wow-detail">Cumulative now ${cur.totalSAOs}</div>
+      <div class="wow-tag ${dSAO>=40?'pos':dSAO>=30?'neu':'neg'}">${dSAO >= 40 ? 'Strong week' : dSAO >= 30 ? 'Steady' : 'Below run-rate'}</div>
+    </div>
+    <div class="wow-card">
+      <div class="wow-card-title">On-track SDRs (≥75% SAO)</div>
+      <div class="wow-main">${cur.onTrack} <span style="font-size:14px;color:${dOnT>=0?'#16a34a':'#dc2626'}">(${dOnT>=0?'+':''}${dOnT})</span></div>
+      <div class="wow-detail">${SDRS.length - cur.onTrack} off-track entering Week 6</div>
+      <div class="wow-tag ${dOnT>0?'pos':dOnT===0?'neu':'neg'}">${dOnT>0?'Improving':dOnT===0?'No change':'Slipping'}</div>
+    </div>
+    <div class="wow-card">
+      <div class="wow-card-title">Median Activities / Week</div>
+      <div class="wow-main">${medLW.toLocaleString()} <span style="font-size:14px;color:${dMed>=0?'#16a34a':'#dc2626'}">(${dMed>=0?'+':''}${dMed.toLocaleString()})</span></div>
+      <div class="wow-detail">Jan avg median: ${medJan.toLocaleString()} / week</div>
+      <div class="wow-tag ${medLW>=500?'pos':medLW>=350?'neu':'neg'}">${medLW>=500?'Above target':medLW>=350?'Building':'Below 500 target'}</div>
+    </div>
+    <div class="wow-card">
+      <div class="wow-card-title">Zone Movements</div>
+      <div class="wow-main" style="font-size:14px;line-height:1.8">${zMoves.length ? zMoves.join('<br>') : 'No changes'}</div>
+      <div class="wow-detail">Net movement from prev. week</div>
+    </div>`;
+}
+
+// ============================================================
+// 2b. WEEK HIGHLIGHTS
+// ============================================================
+function renderHighlights() {
+  document.getElementById('highlightsTitle').textContent = 'Week ' + WEEK.weeksElapsed + ' Highlights';
+  document.getElementById('highlightsGrid').innerHTML = HIGHLIGHTS.map(h => `
+    <div class="highlight-card">
+      <div class="highlight-emoji">${h.emoji}</div>
+      <div class="highlight-name">${h.name}</div>
+      <div class="highlight-title">${h.title}</div>
+      <div class="highlight-stat">${h.stat}</div>
+      <div class="highlight-detail">${h.detail}</div>
+    </div>`).join('');
+}
+
+// ============================================================
+// 3. BU PROGRESS
+// ============================================================
+function renderBU() {
+  const bus = {};
+  SDRS.forEach(s => {
+    if (!bus[s.bu]) bus[s.bu] = {pipe:0,saos:0,saoT:0,pipePR:0,active:0,onTrack:0,total:0};
+    bus[s.bu].saos += s.saos; bus[s.bu].saoT += s.saoT;
+    bus[s.bu].pipePR += s.pipeTarget; if (s.acts != null) bus[s.bu].active++;
+    bus[s.bu].total++;
+    if (s.onTrack) bus[s.bu].onTrack++;
+  });
+  // Overlay snapshot actuals — departed SDRs contribute at BU level
+  ALL_BUS.forEach(bu => {
+    if (!bus[bu]) bus[bu] = {pipe:0,saos:0,saoT:0,pipePR:0,active:0,onTrack:0,total:0};
+    bus[bu].pipe = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].pipe : 0;
+    bus[bu].saos = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].saos : 0;
+  });
+  // Trend helper: compare current attainment % vs previous, return arrow HTML
+  function trendArrow(curPct, prevPct) {
+    const d = curPct - prevPct;
+    if (d > 2) return '<span class="trend-tag up">▲</span>';
+    if (d < -2) return '<span class="trend-tag down">▼</span>';
+    return '<span class="trend-tag flat">▶</span>';
+  }
+  document.getElementById('buGrid').innerHTML = Object.entries(BU_META).map(([k,meta]) => {
+    const d = bus[k] || {pipe:0,saos:0,saoT:0,pipePR:0,active:0,onTrack:0,total:0};
+    const pp = d.pipePR>0?d.pipe/d.pipePR*100:0;
+    const sp = d.saoT>0?d.saos/d.saoT*100:0;
+    const otPct = d.total>0?d.onTrack/d.total*100:0;
+    const otColor = otPct >= 50 ? '#16a34a' : otPct >= 25 ? '#d97706' : '#dc2626';
+    // Previous week attainment for trend
+    const prev = PREV_BU[k] || {pipe:0, saos:0};
+    const prevPP = d.pipePR>0 ? prev.pipe/d.pipePR*100 : 0;
+    const prevSP = d.saoT>0 ? prev.saos/d.saoT*100 : 0;
+    return `<div class="bu-card">
+      <div class="bu-name"><span class="bu-dot" style="background:${meta.color}"></span>${meta.label}<span style="margin-left:auto;display:flex;gap:4px">${trendArrow(pp, prevPP)} ${trendArrow(sp, prevSP)}</span></div>
+      <div style="font-size:11px;color:#94a3b8;margin:-4px 0 8px 0"><span style="color:${d.active>=meta.hcTarget?'#16a34a':'#dc2626'};font-weight:600">${d.active} / ${meta.hcTarget} in-seat</span> · ${meta.mgrShort}</div>
+      <div class="progress-row"><span class="progress-label">Pipeline</span><div class="progress-track"><div class="progress-fill" style="width:${Math.min(pp,100)}%;background:${attColor(pp)}"><span>${pct(pp)}</span></div></div><span class="progress-val">${eurShort(d.pipe)} / ${eurShort(d.pipePR)}</span></div>
+      <div class="progress-row"><span class="progress-label">SAO</span><div class="progress-track"><div class="progress-fill" style="width:${Math.min(sp,100)}%;background:${attColor(sp)}"><span>${pct(sp)}</span></div></div><span class="progress-val">${d.saos} / ${d.saoT}</span></div>
+      <div class="progress-row"><span class="progress-label">On-track</span><div class="progress-track"><div class="progress-fill" style="width:${Math.min(otPct,100)}%;background:${otColor}"><span>${pct(otPct)}</span></div></div><span class="progress-val" style="color:${otColor}">${d.onTrack} / ${d.total} SDRs</span></div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// 4. REGIONAL ALLBOUND
+// ============================================================
+function renderRegions() {
+  const cls = {DACH:'dach',EMEA:'emea',AMER:'amer',APJ:'apj'};
+  const proRatedTarget = 430000 * (WE / WEEK.totalWeeks);
+  function trendArrow(curPct, prevPct) {
+    const d = curPct - prevPct;
+    if (d > 2) return '<span class="trend-tag up">▲</span>';
+    if (d < -2) return '<span class="trend-tag down">▼</span>';
+    return '<span class="trend-tag flat">▶</span>';
+  }
+  // Compute previous-week (W4) regional totals from WEEK_HISTORY
+  const prevW = WEEK_HISTORY.length >= 2 ? WEEK_HISTORY[WEEK_HISTORY.length - 2] : null;
+  const regionBUs = { DACH:['DACH_ENT_OB','DACH_CORP_OB'], EMEA:['EMEA_OB'], AMER:['AMER_OB'], APJ:['APJ_OB'] };
+  function regionFromWeek(w, r) {
+    if (!w) return {pipe:0, saos:0};
+    const bus = regionBUs[r] || [];
+    const ibKey = 'IB_' + r;
+    return {
+      pipe: bus.reduce((s,b) => s + ((w[b]||{}).pipe||0), 0) + ((w[ibKey]||{}).pipe||0),
+      saos: bus.reduce((s,b) => s + ((w[b]||{}).saos||0), 0) + ((w[ibKey]||{}).saos||0)
+    };
+  }
+  document.getElementById('regionStrip').innerHTML = ['DACH','EMEA','AMER','APJ'].map(r => {
+    const sdrs = SDRS.filter(s => s.region===r);
+    // Pipeline & SAOs from authoritative snapshot (includes departed SDRs)
+    const snap = snapshotTotal('R_' + r);
+    const pipe = snap.pipe, saos = snap.saos;
+    // Targets from active SDRs only (departed don't carry forward targets)
+    const prT = sdrs.reduce((s,d)=>s+d.pipeTarget,0), saoT = sdrs.reduce((s,d)=>s+d.saoT,0);
+    const att = prT>0?pipe/prT*100:0;
+    const saoAtt = saoT>0?saos/saoT*100:0;
+    const active = sdrs.filter(s=>s.acts!=null).length, onT = sdrs.filter(s=>s.onTrack).length;
+    // Previous week from WEEK_HISTORY for consistent trend comparison
+    const prev = regionFromWeek(prevW, r);
+    const prevAtt = prT>0?prev.pipe/prT*100:0;
+    const prevSaoAtt = saoT>0?prev.saos/saoT*100:0;
+      const pipeSdr = active>0 ? Math.round(pipe/active) : 0;
+      const pipeSdrPct = proRatedTarget>0 ? pipeSdr/proRatedTarget*100 : 0;
+      return `<div class="region-card ${cls[r]}">
+      <div class="region-name"><span>${r} (Allbound)</span><span style="display:flex;gap:4px">${trendArrow(att, prevAtt)} ${trendArrow(saoAtt, prevSaoAtt)}</span></div>
+      <div style="font-size:11px;color:#94a3b8;margin-bottom:8px">${active} SDRs · ${onT} on-track</div>
+      <div class="region-stat"><span class="region-stat-label">Pipeline</span><span class="region-stat-val">${eurShort(pipe)} <span style="font-weight:400;color:#94a3b8">(${pct(att)})</span></span></div>
+      <div class="region-stat"><span class="region-stat-label">SAO</span><span class="region-stat-val">${saos} <span style="font-weight:400;color:#94a3b8">(${pct(saoAtt)})</span></span></div>
+      <div class="region-stat"><span class="region-stat-label">Pipe / SDR</span><span class="region-stat-val">${eurShort(pipeSdr)} <span style="font-weight:400;color:#94a3b8">(${pct(pipeSdrPct)})</span></span></div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// 5. ZONE SUMMARY
+// ============================================================
+function renderZones() {
+  const zones = [
+    {k:'activity',   l:'Activity Gap',   c:'#dc2626'},
+    {k:'conversion', l:'Conversion Gap',  c:'#d97706'},
+    {k:'deal_size',  l:'Deal Size Gap',   c:'#d97706'},
+    {k:'on_track',   l:'On Track',        c:'#65a30d'},
+    {k:'exceeding',  l:'Exceeding',       c:'#16a34a'},
+    {k:'ramping',    l:'Ramping',          c:'#2563eb'},
+  ];
+  document.getElementById('zoneRow').innerHTML = zones.map(z => {
+    const inZ = SDRS.filter(s => s.zone===z.k);
+    return `<div class="zone-card" style="border-top:3px solid ${z.c}"><div class="zone-card-label" style="color:${z.c}">${z.l}</div><div class="zone-card-count" style="color:${z.c}">${inZ.length}</div><div class="zone-card-names">${inZ.map(s=>firstName(s.name)).join(', ')||'—'}</div></div>`;
+  }).join('');
+}
+
+// ============================================================
+// 6a. ACTIVITY BELL CURVE
+// ============================================================
+function renderBell() {
+  const filtered = SDRS.filter(s => s.weekly != null);
+  const sorted = [...filtered].sort((a,b) => b.weekly - a.weekly);
+  const canvas = document.getElementById('bellChart');
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px'; canvas.style.height=rect.height+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height, pL=90, pR=60, pT=28, pB=50;
+  const pW=W-pL-pR, pH=H-pT-pB;
+  const barH = Math.min(Math.floor(pH / sorted.length) - 2, 16);
+  const gap = Math.max(1, Math.floor((pH - barH * sorted.length) / (sorted.length + 1)));
+  const maxVal = Math.max(...sorted.map(s=>s.weekly), 600) * 1.15;
+  const xScale = pW / maxVal;
+  const x350 = pL + 350 * xScale, x500 = pL + 500 * xScale;
+  // Background zones
+  ctx.fillStyle='rgba(220,38,38,0.04)';ctx.fillRect(pL,pT,x350-pL,pH);
+  ctx.fillStyle='rgba(217,119,6,0.04)';ctx.fillRect(x350,pT,x500-x350,pH);
+  ctx.fillStyle='rgba(22,163,74,0.04)';ctx.fillRect(x500,pT,pL+pW-x500,pH);
+  // Threshold lines
+  [{x:x350,c:'#dc2626',l:'350'},{x:x500,c:'#16a34a',l:'500'}].forEach(z=>{ctx.setLineDash([4,4]);ctx.strokeStyle=z.c;ctx.lineWidth=1.5;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(z.x,pT);ctx.lineTo(z.x,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle=z.c;ctx.font="bold 10px 'DM Sans'";ctx.textAlign='center';ctx.fillText(z.l,z.x,pT+pH+26);});
+  // Median line
+  const sVals=[...filtered.map(s=>s.weekly)].sort((a,b)=>a-b), med=sVals[Math.floor(sVals.length/2)]||0;
+  const medX=pL+med*xScale;
+  ctx.setLineDash([6,3]);ctx.strokeStyle='#0f172a';ctx.lineWidth=2;ctx.globalAlpha=0.6;ctx.beginPath();ctx.moveTo(medX,pT);ctx.lineTo(medX,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#0f172a';ctx.font="bold 10px 'DM Sans'";ctx.textAlign='center';ctx.fillText('Median: '+med,medX,pT-8);
+  // Bars
+  sorted.forEach((s, i) => {
+    const y = pT + gap + i * (barH + gap);
+    const bw = Math.max(s.weekly * xScale, 2);
+    const col = s.weekly >= 500 ? '#16a34a' : s.weekly >= 350 ? '#d97706' : '#dc2626';
+    ctx.fillStyle = col; ctx.globalAlpha = 0.7;
+    ctx.beginPath(); const r=3; ctx.moveTo(pL,y);ctx.lineTo(pL+bw-r,y);ctx.quadraticCurveTo(pL+bw,y,pL+bw,y+r);ctx.lineTo(pL+bw,y+barH-r);ctx.quadraticCurveTo(pL+bw,y+barH,pL+bw-r,y+barH);ctx.lineTo(pL,y+barH);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    // Name label
+    ctx.fillStyle='#334155';ctx.font="500 9px 'DM Sans'";ctx.textAlign='right';
+    ctx.fillText(shortName(s.name), pL-4, y+barH-3);
+    // Value label
+    ctx.fillStyle='#64748b';ctx.font="bold 9px 'DM Sans'";ctx.textAlign='left';
+    ctx.fillText(s.weekly + '/wk', pL+bw+4, y+barH-3);
+  });
+  // Axis
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pL,pT+pH);ctx.lineTo(pL+pW,pT+pH);ctx.stroke();
+  ctx.fillStyle='#94a3b8';ctx.font="500 9px 'DM Sans'";ctx.textAlign='center';
+  for(let v=0;v<=maxVal;v+=200)ctx.fillText(v,pL+v*xScale,pT+pH+12);
+  ctx.fillStyle='#64748b';ctx.font="600 10px 'DM Sans'";ctx.fillText('Activities per Week',pL+pW/2,pT+pH+42);
+}
+
+// ============================================================
+// 6b. SAO ATTAINMENT DISTRIBUTION
+// ============================================================
+function renderSaoDist() {
+  const filtered = SDRS.filter(s => s.saoT > 0);
+  const sorted = [...filtered].sort((a,b) => b.saoPct - a.saoPct);
+  const canvas = document.getElementById('saoChart');
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px'; canvas.style.height=rect.height+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=rect.width, H=rect.height, pL=90, pR=60, pT=28, pB=50;
+  const pW=W-pL-pR, pH=H-pT-pB;
+  const barH = Math.min(Math.floor(pH / sorted.length) - 2, 16);
+  const gap = Math.max(1, Math.floor((pH - barH * sorted.length) / (sorted.length + 1)));
+  const maxPct = Math.max(...sorted.map(s => s.saoPct), 130) * 1.15;
+  const xScale = pW / maxPct;
+  const x50 = pL + 50 * xScale, x75 = pL + 75 * xScale, x100 = pL + 100 * xScale;
+  // Background zones
+  ctx.fillStyle='rgba(220,38,38,0.04)';ctx.fillRect(pL,pT,x50-pL,pH);
+  ctx.fillStyle='rgba(217,119,6,0.04)';ctx.fillRect(x50,pT,x75-x50,pH);
+  ctx.fillStyle='rgba(22,163,74,0.04)';ctx.fillRect(x75,pT,pL+pW-x75,pH);
+  // 100% line
+  ctx.setLineDash([6,3]);ctx.strokeStyle='#0f172a';ctx.lineWidth=1.5;ctx.globalAlpha=0.4;ctx.beginPath();ctx.moveTo(x100,pT);ctx.lineTo(x100,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#0f172a';ctx.font="bold 10px 'DM Sans'";ctx.textAlign='center';ctx.fillText('100%',x100,pT-8);
+  // Threshold lines
+  [{x:x50,c:'#dc2626',l:'50%'},{x:x75,c:'#d97706',l:'75%'}].forEach(z=>{ctx.setLineDash([3,3]);ctx.strokeStyle=z.c;ctx.lineWidth=1;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(z.x,pT);ctx.lineTo(z.x,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;});
+  // Bars
+  sorted.forEach((s, i) => {
+    const y = pT + gap + i * (barH + gap);
+    const bw = Math.max(Math.min(s.saoPct, maxPct) * xScale, 2);
+    const col = s.saoPct >= 75 ? '#16a34a' : s.saoPct >= 50 ? '#d97706' : '#dc2626';
+    ctx.fillStyle = col; ctx.globalAlpha = 0.7;
+    ctx.beginPath(); const r=3; ctx.moveTo(pL,y);ctx.lineTo(pL+bw-r,y);ctx.quadraticCurveTo(pL+bw,y,pL+bw,y+r);ctx.lineTo(pL+bw,y+barH-r);ctx.quadraticCurveTo(pL+bw,y+barH,pL+bw-r,y+barH);ctx.lineTo(pL,y+barH);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    // Name label
+    ctx.fillStyle='#334155';ctx.font="500 9px 'DM Sans'";ctx.textAlign='right';
+    ctx.fillText(shortName(s.name), pL-4, y+barH-3);
+    // Value label
+    ctx.fillStyle='#64748b';ctx.font="bold 9px 'DM Sans'";ctx.textAlign='left';
+    ctx.fillText(pct(s.saoPct)+' ('+s.saos+'/'+s.saoT+')', pL+bw+4, y+barH-3);
+  });
+  // Axis
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pL,pT+pH);ctx.lineTo(pL+pW,pT+pH);ctx.stroke();
+  ctx.fillStyle='#94a3b8';ctx.font="500 9px 'DM Sans'";ctx.textAlign='center';
+  for(let v=0;v<=maxPct;v+=25)ctx.fillText(v+'%',pL+v*xScale,pT+pH+14);
+  ctx.fillStyle='#64748b';ctx.font="600 10px 'DM Sans'";ctx.fillText('SAO % of Individual Pro-rated Target',pL+pW/2,pT+pH+38);
+}
+
+// ============================================================
+// 6c. PIPELINE ATTAINMENT DISTRIBUTION
+// ============================================================
+function renderPipeDist() {
+  const filtered = SDRS.filter(s => s.pipeTarget > 0);
+  const canvas = document.getElementById('pipeChart');
+  const dpr = window.devicePixelRatio||1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width=rect.width*dpr; canvas.height=rect.height*dpr;
+  canvas.style.width=rect.width+'px'; canvas.style.height=rect.height+'px';
+  const ctx=canvas.getContext('2d'); ctx.scale(dpr,dpr);
+  const W=rect.width,H=rect.height,pL=90,pR=50,pT=28,pB=50;
+  const pW=W-pL-pR, pH=H-pT-pB;
+  const sorted = [...filtered].sort((a,b) => b.pipePct - a.pipePct);
+  const barH = Math.min(Math.floor(pH / sorted.length) - 2, 16);
+  const gap = Math.max(1, Math.floor((pH - barH * sorted.length) / (sorted.length + 1)));
+  const maxPct = Math.max(...sorted.map(s => s.pipePct), 220) * 1.15;
+  const xScale = pW / maxPct;
+  const x50 = pL + 50 * xScale, x90 = pL + 90 * xScale, x100 = pL + 100 * xScale;
+  ctx.fillStyle='rgba(220,38,38,0.04)';ctx.fillRect(pL,pT,x50-pL,pH);
+  ctx.fillStyle='rgba(217,119,6,0.04)';ctx.fillRect(x50,pT,x90-x50,pH);
+  ctx.fillStyle='rgba(22,163,74,0.04)';ctx.fillRect(x90,pT,pL+pW-x90,pH);
+  ctx.setLineDash([6,3]);ctx.strokeStyle='#0f172a';ctx.lineWidth=1.5;ctx.globalAlpha=0.4;ctx.beginPath();ctx.moveTo(x100,pT);ctx.lineTo(x100,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;ctx.fillStyle='#0f172a';ctx.font="bold 10px 'DM Sans'";ctx.textAlign='center';ctx.fillText('100%',x100,pT-8);
+  [{x:x50,c:'#dc2626',l:'50%'},{x:x90,c:'#d97706',l:'90%'}].forEach(z=>{ctx.setLineDash([3,3]);ctx.strokeStyle=z.c;ctx.lineWidth=1;ctx.globalAlpha=0.5;ctx.beginPath();ctx.moveTo(z.x,pT);ctx.lineTo(z.x,pT+pH);ctx.stroke();ctx.setLineDash([]);ctx.globalAlpha=1;});
+  sorted.forEach((s, i) => {
+    const y = pT + gap + i * (barH + gap);
+    const bw = Math.max(Math.min(s.pipePct, maxPct) * xScale, 2);
+    const col = s.pipePct >= 90 ? '#16a34a' : s.pipePct >= 50 ? '#d97706' : '#dc2626';
+    ctx.fillStyle = col; ctx.globalAlpha = 0.7;
+    ctx.beginPath(); const r=3; ctx.moveTo(pL,y);ctx.lineTo(pL+bw-r,y);ctx.quadraticCurveTo(pL+bw,y,pL+bw,y+r);ctx.lineTo(pL+bw,y+barH-r);ctx.quadraticCurveTo(pL+bw,y+barH,pL+bw-r,y+barH);ctx.lineTo(pL,y+barH);ctx.closePath();ctx.fill();ctx.globalAlpha=1;
+    ctx.fillStyle='#334155';ctx.font="500 9px 'DM Sans'";ctx.textAlign='right';
+    ctx.fillText(shortName(s.name), pL-4, y+barH-3);
+    ctx.fillStyle='#64748b';ctx.font="bold 9px 'DM Sans'";ctx.textAlign='left';
+    ctx.fillText(pct(s.pipePct)+' ('+eurShort(s.pipe)+')', pL+bw+4, y+barH-3);
+  });
+  ctx.strokeStyle='#e2e8f0';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pL,pT+pH);ctx.lineTo(pL+pW,pT+pH);ctx.stroke();ctx.fillStyle='#94a3b8';ctx.font="500 9px 'DM Sans'";ctx.textAlign='center';for(let v=0;v<=maxPct;v+=25)ctx.fillText(v+'%',pL+v*xScale,pT+pH+14);ctx.fillStyle='#64748b';ctx.font="600 10px 'DM Sans'";ctx.fillText('Pipeline % of Individual Pro-rated Target',pL+pW/2,pT+pH+38);
+}
+
+// ============================================================
+// 7. SDR TABLE (filtered)
+// ============================================================
+let currentBU = 'ALL', currentRegion = null;
+let sortCol = 'pipePct', sortDir = -1;
+
+function getFiltered() {
+  return SDRS.filter(s => {
+    if (currentRegion) return s.region === currentRegion;
+    if (currentBU === 'ALL') return true;
+    return s.bu === currentBU;
+  });
+}
+
+function renderTable() {
+  const filtered = getFiltered();
+  document.getElementById('sdrCount').textContent = filtered.length + ' SDRs shown';
+  const cols = [
+    {k:'name',l:'SDR',w:'190px'},
+    {k:'saoPct',l:'SAO',w:'95px'},
+    {k:'pipePct',l:'Pipeline',w:'95px'},
+    {k:'weekly',l:'Activity',w:'95px'},
+    {k:'efficiency',l:'Efficiency',w:'95px'},
+    {k:'zone',l:'Status',w:'95px'}
+  ];
+  document.getElementById('sdrHead').innerHTML = cols.map(c =>
+    `<th style="width:${c.w}" data-sort="${c.k}">${c.l}${sortCol===c.k?(sortDir===-1?' ▼':' ▲'):''}</th>`
+  ).join('');
+  const sorted = [...filtered].sort((a,b) => {
+    let av=a[sortCol],bv=b[sortCol]; if(av==null)av=-Infinity;if(bv==null)bv=-Infinity;
+    if(typeof av==='string') return sortDir*av.localeCompare(bv);
+    return sortDir*(av-bv);
+  });
+  // Median efficiency for directional indicator
+  const effVals = filtered.filter(s=>s.efficiency!=null).map(s=>s.efficiency).sort((a,b)=>a-b);
+  const medEff = effVals.length ? effVals[Math.floor(effVals.length/2)] : null;
+
+  // WoW trend micro-arrow helper
+  function wowArrow(cur, prev) {
+    if (cur == null || prev == null) return '';
+    const d = cur - prev;
+    if (d > 0) return ' <span style="font-size:9px;color:#16a34a" title="Up WoW">▲</span>';
+    if (d < 0) return ' <span style="font-size:9px;color:#dc2626" title="Down WoW">▼</span>';
+    return ' <span style="font-size:9px;color:#94a3b8" title="Flat WoW">▶</span>';
+  }
+
+  document.getElementById('sdrBody').innerHTML = sorted.map(s => {
+    // Compute WoW trends from weekly history
+    const wh = SDR_WEEK_HISTORY[s.name];
+    const pipeTrend = wh && wh.length >= 2 ? wowArrow(wh[wh.length-1], wh[wh.length-2]) : '';
+    // SAO & Activity trends — activate when history arrays are populated
+    const saoTrend = s._saoThisWk != null ? wowArrow(s._saoThisWk, s._saoLastWk) : '';
+    const actTrend = s._actThisWk != null ? wowArrow(s._actThisWk, s._actLastWk) : '';
+    // Efficiency: lower is better, so invert (improving = prev was higher)
+    const effTrend = s._effThisWk != null ? wowArrow(s._effLastWk, s._effThisWk) : '';
+    // SAO cell RAG
+    const saoRag = s.saoPct >= 100 ? 'green' : s.saoPct >= 75 ? 'lime' : s.saoPct >= 50 ? 'amber' : 'red';
+    const saoCol = {green:'#16a34a',lime:'#65a30d',amber:'#d97706',red:'#dc2626'}[saoRag];
+    // Pipeline cell RAG
+    const pipeRag = s.pipePct >= 90 ? 'green' : s.pipePct >= 50 ? 'amber' : 'red';
+    const pipeCol = {green:'#16a34a',amber:'#d97706',red:'#dc2626'}[pipeRag];
+    // Activity RAG cell
+    const actRag = s.weekly==null ? null : s.weekly>=500 ? 'green' : s.weekly>=350 ? 'amber' : 'red';
+    const actCol = {green:'#16a34a',amber:'#d97706',red:'#dc2626'}[actRag]||'#94a3b8';
+    // Efficiency RAG cell (lower is better — vs median)
+    const effRag = s.efficiency!=null && medEff!=null ? (s.efficiency <= medEff*0.85 ? 'green' : s.efficiency <= medEff*1.3 ? 'amber' : 'red') : null;
+    const effCol = {green:'#16a34a',amber:'#d97706',red:'#dc2626'}[effRag]||'#94a3b8';
+    const effLabel = s.efficiency!=null && medEff!=null ? (s.efficiency <= medEff*0.85 ? 'Efficient' : s.efficiency <= medEff*1.3 ? 'Average' : 'Review') : '';
+    // Zone
+    const zc=zoneColor(s.zone),zb=zoneBg(s.zone),zbd=zoneBorder(s.zone);
+    // Type badge
+    const typeBadge = s.type==='Ramp' ? 'sdr-badge-ramp' : 'sdr-badge-full';
+
+    return `<tr>
+      <td>
+        <span class="sdr-name-cell">${s.name}</span>
+        <div class="sdr-badges">
+          <span class="sdr-badge sdr-badge-seg">${s.seg}</span>
+          <span class="sdr-badge ${typeBadge}">${s.type}</span>
+          ${currentBU==='ALL'&&!currentRegion?'<span class="sdr-badge sdr-badge-region">'+s.region+'</span>':''}
+        </div>
+      </td>
+      <td><div class="rag-cell rag-cell-${saoRag}"><div class="rag-val" style="color:${saoCol}">${pct(s.saoPct)}${saoTrend}</div><div class="rag-sub">${s.saos} / ${s.saoT}</div></div></td>
+      <td><div class="rag-cell rag-cell-${pipeRag}"><div class="rag-val" style="color:${pipeCol}">${pct(s.pipePct)}${pipeTrend}</div><div class="rag-sub">${eurShort(s.pipe)} of ${eurShort(s.pipeTarget)}</div></div></td>
+      <td><div class="rag-cell ${actRag?'rag-cell-'+actRag:''}"><div class="rag-val" style="color:${actCol}">${s.weekly!=null?s.weekly:'—'}${actTrend}</div><div class="rag-sub">${s.weekly!=null?'per week':'No data'}</div></div></td>
+      <td><div class="rag-cell ${effRag?'rag-cell-'+effRag:''}"><div class="rag-val" style="color:${effCol}">${s.efficiency!=null?s.efficiency:'—'}${effTrend}</div><div class="rag-sub">${effLabel||'acts / SAO'}</div></div></td>
+      <td><span class="tag" style="color:${zc};background:${zb};border:1px solid ${zbd}">${zoneLabel(s.zone)}</span></td>
+    </tr>`;
+  }).join('');
+  document.querySelectorAll('#sdrHead th').forEach(th => {
+    th.onclick = () => { const k=th.dataset.sort; if(sortCol===k)sortDir*=-1; else{sortCol=k;sortDir=-1;} renderTable(); renderAnalysis(); };
+  });
+}
+
+// ============================================================
+// 8. DYNAMIC ANALYSIS SECTION
+// ============================================================
+function renderAnalysis() {
+  const filtered = getFiltered();
+  const box = document.getElementById('analysisBox');
+  if (filtered.length === 0) { box.innerHTML = '<div class="analysis-title"><span class="icon">📊</span>No SDRs in view</div>'; return; }
+
+  const activePipe = filtered.reduce((s,d)=>s+d.pipe,0);
+  const tTarget = filtered.reduce((s,d)=>s+d.pipeTarget,0);
+  const tSAOT = filtered.reduce((s,d)=>s+d.saoT,0);
+
+  // Determine scope early
+  const isGlobal = (!currentBU || currentBU === 'ALL') && !currentRegion;
+
+  // Headline totals from snapshot (includes departed SDR contributions)
+  let snapScope = 'GLOBAL';
+  if (currentBU && currentBU !== 'ALL') snapScope = currentBU;
+  else if (currentRegion) snapScope = 'R_' + currentRegion;
+  const snapTotals = snapshotTotal(snapScope);
+  const tPipe = snapTotals.pipe;
+  const tSAO = snapTotals.saos;
+
+  // Departed contribution = snapshot minus active SDRS for this scope
+  const deptPipe = Math.max(0, tPipe - activePipe);
+  const deptSaos = Math.max(0, tSAO - filtered.reduce((s,d)=>s+d.saos,0));
+
+  const pAtt = tTarget>0?tPipe/tTarget*100:0;
+  const sAtt = tSAOT>0?tSAO/tSAOT*100:0;
+  const active = filtered.filter(s=>s.acts!=null);
+  const onTrack = filtered.filter(s=>s.onTrack);
+  const inActivity = filtered.filter(s=>s.zone==='activity');
+  const inConversion = filtered.filter(s=>s.zone==='conversion');
+  const inDealSize = filtered.filter(s=>s.zone==='deal_size');
+  const inExceeding = filtered.filter(s=>s.zone==='exceeding');
+  const inRamping = filtered.filter(s=>s.zone==='ramping');
+  const inOnTrack = filtered.filter(s=>s.zone==='on_track');
+  const topPipe = [...filtered].sort((a,b)=>b.pipePct-a.pipePct);
+  const botPipe = [...filtered].sort((a,b)=>a.pipePct-b.pipePct);
+  const gapTotal = Math.max(0, tTarget - tPipe);
+  const weeksLeft = WEEK.weeksRemaining;
+  const weeklyNeeded = weeksLeft>0?Math.round(gapTotal/weeksLeft):0;
+
+  // Title
+  let title = 'Global Analysis';
+  let mgrNote = '';
+  if (currentBU && currentBU !== 'ALL') {
+    const m = BU_META[currentBU];
+    title = m.label + ' Analysis';
+    mgrNote = `Manager: ${m.managers.join(', ')}`;
+  }
+  if (currentRegion) { title = currentRegion + ' Allbound Analysis'; }
+
+  // Build analysis paragraphs
+  let html = `<div class="analysis-title"><span class="icon">📊</span>${title}</div>`;
+  if (mgrNote) html += `<div style="font-size:11px;color:#64748b;margin-bottom:10px">${mgrNote}</div>`;
+  html += '<div class="analysis-body">';
+
+  // ── 1. Pipeline Health ──
+  const healthClass = pAtt >= 90 ? 'good' : pAtt >= 60 ? 'warn' : 'risk';
+  const healthLabel = pAtt >= 90 ? 'On-track' : pAtt >= 60 ? 'At risk' : 'Off-track';
+  html += `<h4>Pipeline Health</h4>`;
+  html += `<div class="callout ${healthClass}"><strong>${healthLabel}:</strong> ${eurShort(tPipe)} delivered against ${eurShort(tTarget)} pro-rated target (${pct(pAtt)} attainment). The team needs ${eurShort(gapTotal)} more pipeline across the remaining ${weeksLeft} weeks, requiring roughly ${eurShort(weeklyNeeded)}/week to close the gap.</div>`;
+
+  // ── Quarter Trajectory (projection against actual Q1 target) ──
+  const WE = WEEK.weeksElapsed;
+  const TW = WEEK.totalWeeks;
+  if (WE >= 2) {
+    // tPipe already includes departed pipeline for the current scope
+    const weeklyRate = Math.round(tPipe / WE);
+    const projected = weeklyRate * TW;
+    // Use actual Q1 targets (seasonality-weighted) not linear extrapolation
+    const fullQTarget = filtered.reduce((s,d) => s + (d.pipeQ1 || 0), 0);
+    const projPct = fullQTarget > 0 ? projected / fullQTarget * 100 : 0;
+    const remainingNeeded = Math.max(0, fullQTarget - tPipe);
+    const weeklyToClose = weeksLeft > 0 ? Math.round(remainingNeeded / weeksLeft) : 0;
+    const projClass = projPct >= 90 ? 'good' : projPct >= 70 ? 'warn' : 'risk';
+    html += `<h4>Quarter Trajectory</h4>`;
+    html += `<div class="callout ${projClass}">At the current weekly run rate of ${eurShort(weeklyRate)}/week, the team is on pace to finish at <strong>${eurShort(projected)}</strong> (${pct(projPct)} of full Q1 target of ${eurShort(fullQTarget)}). To hit the full quarter, the remaining ${weeksLeft} weeks need to average <strong>${eurShort(weeklyToClose)}/week</strong> (${weeklyRate > 0 ? pct(weeklyToClose / weeklyRate * 100) : 'N/A'} of current pace). ${projPct >= 90 ? 'Current trajectory meets target if the pace holds.' : projPct >= 70 ? 'An acceleration is needed, but the gap is closeable. Targets are designed to ramp alongside new hires coming online, so the weekly ask naturally increases through the quarter.' : 'The gap is expected by design: Q1 targets are back-loaded (March is 43% of Q1) to align with new hires ramping into production. Being at ' + pct(pAtt) + ' of pro-rated target means the existing team is broadly on pace for what has been asked of them so far. Closing the full quarter depends on hiring velocity and ramp SDRs converting.'}</div>`; 
+  }
+
+  // ── 2. SAO Attainment ──
+  html += `<h4>SAO Attainment</h4>`;
+  html += `<p>${tSAO} SAO against ${tSAOT} pro-rated target (${pct(sAtt)}). ${onTrack.length} of ${filtered.length} SDRs are on-track (\u226575% attainment). ${sAtt >= 85 ? 'SAO volume is healthy, suggesting the pipeline gap is a deal-size challenge rather than a volume problem.' : sAtt >= 60 ? 'SAO generation is building but needs to accelerate to keep the pipeline funnel healthy.' : 'SAO volume is significantly below target and needs urgent attention alongside pipeline.'}</p>`;
+
+  // ── NEW: Efficiency Trend (pipeline per 1,000 activities) ──
+  // Uses activePipe (excluding departed) because their activities are not in the total
+  const totalActs = filtered.reduce((s,d) => s + (d.acts || 0), 0);
+  const currentEfficiency = totalActs > 0 ? Math.round(activePipe / totalActs * 1000) : 0;
+  // Previous efficiency from PREV_WEEK
+  const prevTotalActs = PREV_WEEK.totalActs || 0;
+  const prevTotalPipe = PREV_WEEK.totalPipe || 0;
+  if (totalActs > 0) {
+    html += `<h4>Efficiency</h4>`;
+    let effTrend = '';
+    if (prevTotalActs > 0 && isGlobal) {
+      const prevEff = Math.round(prevTotalPipe / prevTotalActs * 1000);
+      const effDelta = currentEfficiency - prevEff;
+      const effDir = effDelta > 0 ? 'up' : effDelta < 0 ? 'down' : 'flat';
+      effTrend = effDir === 'up'
+        ? ` This is up from ${eurShort(prevEff)}/1k last week (+${eurShort(effDelta)}), indicating improving conversion quality.`
+        : effDir === 'down'
+        ? ` This is down from ${eurShort(prevEff)}/1k last week (${eurShort(effDelta)}), suggesting activity is increasing faster than pipeline output.`
+        : ` Unchanged from last week.`;
+    }
+    html += `<p>The team is generating <strong>${eurShort(currentEfficiency)} pipeline per 1,000 activities</strong>.${effTrend} ${currentEfficiency >= 5000 ? 'Strong efficiency. Conversations are landing well.' : currentEfficiency >= 2500 ? 'Moderate efficiency. There is room to improve conversion quality alongside volume.' : 'Low efficiency. Activity is high relative to pipeline output, which points to a targeting or messaging gap at the team level.'}</p>`;
+  }
+
+  // ── 3. Top Performers + Concentration Risk ──
+  if (topPipe.length > 0) {
+    html += `<h4>Carrying the Number</h4>`;
+    const tp = topPipe.filter(s => s.pipePct >= 75).slice(0, 3);
+    if (tp.length > 0) {
+      html += `<div class="callout good">${tp.map(s => `<strong>${s.name}</strong> at ${pct(s.pipePct)} pipeline / ${pct(s.saoPct)} SAO`).join(' \u00b7 ')}</div>`;
+      const topContrib = tp.reduce((s,d)=>s+d.pipe,0);
+      const concPct = tPipe>0?topContrib/tPipe*100:0;
+      if (concPct > 50 && filtered.length > 3) {
+        html += `<p style="color:#d97706">\u26a0\ufe0f Concentration risk: top ${tp.length} contribute ${pct(concPct)} of total pipeline. If any of these SDRs stall, the gap widens quickly.</p>`;
+      }
+    } else {
+      html += `<p>No SDR has reached 75% of their pipeline target yet. Broad acceleration needed.</p>`;
+    }
+  }
+
+  // ── NEW: Departed Pipeline Dependency ──
+  // Only count BUs where departed SDRs added pipeline (positive gap)
+  const positiveDeparted = Object.entries(DEPARTED).filter(([bu, d]) => d.pipe > 0);
+  const totalDepartedPipe = positiveDeparted.reduce((s,[,d]) => s + d.pipe, 0);
+  const totalDepartedSaos = positiveDeparted.reduce((s,[,d]) => s + Math.max(0, d.saos), 0);
+  if (isGlobal && totalDepartedPipe > 0) {
+    const deptPct = tPipe > 0 ? totalDepartedPipe / tPipe * 100 : 0;
+    html += `<h4>Departed Pipeline Dependency</h4>`;
+    html += `<div class="callout warn">${eurShort(totalDepartedPipe)} pipeline and ${totalDepartedSaos} SAOs (${pct(deptPct)} of total pipeline) were generated by SDRs who have since been promoted or left the team. This pipeline will not regenerate next quarter. Breakdown: ${positiveDeparted.map(([bu, d]) => `${BU_META[bu] ? BU_META[bu].label : bu}: ${eurShort(d.pipe)}`).join(', ')}.</div>`;
+  } else if (currentBU && DEPARTED[currentBU] && DEPARTED[currentBU].pipe > 0) {
+    const deptBU = DEPARTED[currentBU];
+    const deptPctBU = tPipe > 0 ? deptBU.pipe / tPipe * 100 : 0;
+    html += `<h4>Departed Pipeline Dependency</h4>`;
+    html += `<div class="callout warn">${eurShort(deptBU.pipe)} pipeline and ${Math.max(0, deptBU.saos)} SAOs (${pct(deptPctBU)} of BU pipeline) were generated by SDRs who have since moved on. This is non-recurring and will create a gap in Q2 if not replaced by new production.</div>`;
+  }
+
+  // ── NEW: BU Pacing Comparison (global view only) ──
+  if (isGlobal) {
+    html += `<h4>BU Pacing</h4>`;
+    const buPacing = Object.keys(BU_META).map(bu => {
+      const buSDRs = SDRS.filter(s => s.bu === bu);
+      const buPipe = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].pipe : 0;
+      const buSaos = SNAPSHOT_W5[bu] ? SNAPSHOT_W5[bu].saos : 0;
+      const buTarget = buSDRs.reduce((s,d) => s + d.pipeTarget, 0);
+      const buAtt = buTarget > 0 ? buPipe / buTarget * 100 : 0;
+      const activeCount = buSDRs.length;
+      const hcTarget = BU_META[bu].hcTarget;
+      return { bu, label: BU_META[bu].label, att: buAtt, activeCount, hcTarget, pipe: buPipe, target: buTarget };
+    }).sort((a,b) => b.att - a.att);
+
+    html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin:8px 0">';
+    buPacing.forEach(b => {
+      const col = b.att >= 90 ? '#16a34a' : b.att >= 60 ? '#d97706' : '#dc2626';
+      const bg = b.att >= 90 ? '#f0fdf4' : b.att >= 60 ? '#fffbeb' : '#fef2f2';
+      html += `<div style="background:${bg};border-left:3px solid ${col};padding:6px 10px;border-radius:0 6px 6px 0;font-size:11px">
+        <strong>${b.label}</strong><br>
+        <span style="color:${col};font-weight:600">${pct(b.att)}</span> attainment \u00b7 ${b.activeCount}/${b.hcTarget} seats filled \u00b7 ${eurShort(b.pipe)} pipeline
+      </div>`;
+    });
+    html += '</div>';
+
+    const topBU = buPacing[0];
+    const botBU = buPacing[buPacing.length - 1];
+    if (topBU && botBU && buPacing.length > 1) {
+      html += `<p>${topBU.label} leads at ${pct(topBU.att)} attainment. ${botBU.label} is the furthest behind at ${pct(botBU.att)}${botBU.activeCount < botBU.hcTarget ? `, compounded by only ${botBU.activeCount} of ${botBU.hcTarget} seats being filled` : ''}.</p>`;
+    }
+  }
+
+  // ── NEW: Hiring Gap Cost ──
+  if (isGlobal || (currentBU && currentBU !== 'ALL')) {
+    let scopeBUs = isGlobal ? Object.keys(BU_META) : [currentBU];
+    let totalHCTarget = 0, totalActive = 0;
+    const buGaps = [];
+    scopeBUs.forEach(bu => {
+      const meta = BU_META[bu];
+      const activeInBU = SDRS.filter(s => s.bu === bu).length;
+      const gap = meta.hcTarget - activeInBU;
+      totalHCTarget += meta.hcTarget;
+      totalActive += activeInBU;
+      if (gap > 0) buGaps.push({ label: meta.label, gap, hcTarget: meta.hcTarget, active: activeInBU });
+    });
+    const totalGap = totalHCTarget - totalActive;
+    if (totalGap > 0) {
+      // Estimate pipeline capacity per seat using current performers
+      const fullSDRs = filtered.filter(s => s.type === 'Full' && s.pipe > 0);
+      const avgPipePerFull = fullSDRs.length > 0 ? Math.round(fullSDRs.reduce((s,d) => s + (d.pipeQ1 || 0), 0) / fullSDRs.length) : 0;
+      const lostCapacity = avgPipePerFull * totalGap;
+
+      html += `<h4>Hiring Gap</h4>`;
+      html += `<div class="callout risk"><strong>${totalGap} unfilled seats</strong> (${totalActive} of ${totalHCTarget} target). `;
+      if (avgPipePerFull > 0) {
+        html += `At the average full-quota target of ${eurShort(avgPipePerFull)}/SDR, these empty seats represent an estimated <strong>${eurShort(lostCapacity)} pipeline capacity gap</strong> this quarter. `;
+      }
+      html += `Gaps by BU: ${buGaps.sort((a,b) => b.gap - a.gap).map(g => `${g.label} (${g.gap} open, ${g.active}/${g.hcTarget})`).join(', ')}.</div>`;
+
+      // Flag most critical
+      const biggest = buGaps.sort((a,b) => b.gap - a.gap)[0];
+      if (biggest && biggest.gap >= 3) {
+        html += `<p style="color:#dc2626">${biggest.label} is the most critical hiring gap with ${biggest.gap} open seats. Every week these remain unfilled erodes pipeline capacity that cannot be recovered in-quarter.</p>`;
+      }
+    }
+  }
+
+  // ── NEW: Ramp Cohort Forecast ──
+  if (inRamping.length > 0) {
+    const rampTotalTarget = inRamping.reduce((s,d) => s + d.pipeTarget, 0);
+    const rampCurrentPipe = inRamping.reduce((s,d) => s + d.pipe, 0);
+    const rampSAOs = inRamping.reduce((s,d) => s + d.saos, 0);
+    // Estimate full-quarter contribution: extrapolate current ramp targets to what full quota would be
+    const fullSDRs = filtered.filter(s => s.type === 'Full');
+    const avgFullTarget = fullSDRs.length > 0 ? Math.round(fullSDRs.reduce((s,d) => s + (d.pipeQ1 || 0), 0) / fullSDRs.length) : 0;
+    const projectedFullContrib = avgFullTarget * inRamping.length;
+
+    html += `<h4>Ramp Cohort</h4>`;
+    html += `<div class="callout" style="border-left-color:#2563eb;background:#eff6ff">${inRamping.length} SDRs are on ramp targets totalling ${eurShort(rampTotalTarget)} this quarter (${eurShort(rampCurrentPipe)} delivered so far, ${rampSAOs} SAO). `;
+    if (avgFullTarget > 0) {
+      html += `Once at full quota, this cohort represents an estimated <strong>${eurShort(projectedFullContrib)} additional pipeline capacity per quarter</strong>. `;
+    }
+    html += `Ramp SDRs: ${inRamping.map(s => `${s.name} (${eurShort(s.pipe)}/${eurShort(s.pipeTarget)})`).join(', ')}.</div>`;
+
+    // Flag any struggling ramp SDRs
+    const rampStruggling = inRamping.filter(s => s.saos === 0 && (s.weekly || 0) < 100);
+    if (rampStruggling.length > 0) {
+      html += `<p style="color:#d97706">${rampStruggling.map(s => s.name).join(', ')} ${rampStruggling.length === 1 ? 'is' : 'are'} on ramp with very low activity and no SAO. Check onboarding milestone completion and consider whether additional support or buddy pairing is needed.</p>`;
+    }
+  }
+
+  // ── 4. Zone Concerns ──
+  const needsAttention = [...inActivity, ...inConversion, ...inDealSize];
+  if (inActivity.length > 0) {
+    html += `<h4>\ud83d\udd34 Activity Gap (${inActivity.length})</h4>`;
+    html += `<div class="callout risk">${inActivity.map(s => `<strong>${s.name}</strong>: ${s.weekly||0} acts/wk, ${pct(s.saoPct)} SAO, ${pct(s.pipePct)} pipeline`).join('<br>')}</div>`;
+    html += `<p>Priority for manager 1:1s and call-listening sessions. Address confidence, time management, or motivation barriers. Protect prospecting hours.</p>`;
+  }
+  if (inConversion.length > 0) {
+    html += `<h4>\u26a0\ufe0f Conversion Gap (${inConversion.length})</h4>`;
+    html += `<div class="callout warn">${inConversion.map(s => `<strong>${s.name}</strong>: ${s.weekly||0} acts/wk, ${pct(s.saoPct)} SAO, ${pct(s.pipePct)} pipeline`).join('<br>')}</div>`;
+    html += `<p>Activity is present but not converting. Review call quality, qualification approach, and STRATEGIC framework execution.</p>`;
+  }
+  if (inDealSize.length > 0) {
+    html += `<h4>\u26a0\ufe0f Deal Size Gap (${inDealSize.length})</h4>`;
+    html += `<div class="callout warn">${inDealSize.map(s => `<strong>${s.name}</strong>: ${pct(s.saoPct)} SAO but ${pct(s.pipePct)} pipeline (${eurShort(s.pipe)})`).join('<br>')}</div>`;
+    html += `<p>Creating opportunities but deal values are too small. Managers should probe two root causes: first, whether reps are genuinely targeting smaller accounts (fix the account list); second, whether forecasted values are being low-balled at SAO creation. Under-forecasting has been an organisational pattern, so managers should cross-check rep estimates against historical average deal sizes for the segment before accepting the value.</p>`;
+  }
+
+  // ── 5. Activity Pattern ──
+  const medianAct = [...active].map(s=>s.weekly).sort((a,b)=>a-b);
+  const medVal = medianAct[Math.floor(medianAct.length/2)] || 0;
+  html += `<h4>Activity Pattern</h4>`;
+  html += `<p>Median weekly activity: ${medVal}/week (target: 500). ${medVal >= 500 ? 'Team is at target pace.' : medVal >= 350 ? 'Building but needs another 30\u201340% increase to reach sustainable levels.' : 'Significantly below target. This is the single biggest lever for improvement.'} ${active.filter(s=>(s.weekly||0)>=500).length} of ${active.length} SDRs are above the 500/week threshold.</p>`;
+
+  // ── 6. Next Week Focus ──
+  html += `<h4>Week ${WE + 1} Focus</h4>`;
+  const priorities = [];
+  if (pAtt < 70) priorities.push('Pipeline acceleration is the top priority. Every coaching conversation should include pipeline target gap and a plan to close it.');
+  if (inActivity.length >= filtered.length * 0.3) priorities.push(`${inActivity.length} SDRs with an activity gap. Consider a team activity sprint or targeted call blitz to build momentum.`);
+  if (inConversion.length > 0) priorities.push(`${inConversion.length} SDRs with a conversion gap. Prioritise call quality reviews and STRATEGIC framework coaching.`);
+  if (inDealSize.length > 0) priorities.push('Address deal-size gap for SDRs hitting SAO but underdelivering on pipeline value.');
+  if (medVal < 350) priorities.push('Activity levels need immediate uplift. Protect prospecting hours and reduce meeting overhead.');
+  const totalGapCheck = Object.keys(BU_META).reduce((s, bu) => s + BU_META[bu].hcTarget - SDRS.filter(d => d.bu === bu).length, 0);
+  if (totalGapCheck >= 10) priorities.push(`Hiring remains critical with ${totalGapCheck} open seats. Escalate recruiting timelines where possible.`);
+  if (inRamping.length >= 3) priorities.push(`${inRamping.length} SDRs ramping. Ensure onboarding cadence is tight and managers have time allocated for ramp coaching.`);
+  if (priorities.length === 0) priorities.push('Maintain current trajectory and focus on moving On Track SDRs into Exceeding.');
+  html += `<p>${priorities.join(' ')}</p>`;
+
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+// ============================================================
+// 9. COACHING FOCUS MATRIX
+// ============================================================
+function renderCoaching() {
+  const box = document.getElementById('coachingMatrix');
+  const filtered = getFiltered();
+  if (filtered.length === 0) { box.innerHTML = ''; return; }
+  document.getElementById('coachingSub').textContent = `Personalised development focus for Week ${WEEK.weeksElapsed} \u00b7 updates weekly based on data, activity trends, and quarter phase`;
+
+  const WE = WEEK.weeksElapsed;
+  const WR = WEEK.weeksRemaining;
+  const WN = WEEK.number;
+
+  // Quarter phase: early (1-4), mid (5-9), late (10-13)
+  const phase = WE <= 4 ? 'early' : WE <= 9 ? 'mid' : 'late';
+
+  // Generate coaching data per SDR
+  function coachData(s) {
+    const w = s.weekly || 0;
+    const avgDeal = s.saos > 0 ? Math.round(s.pipe / s.saos) : 0;
+    const wiz = s.weeksInZone || 1;
+
+    // --- Layer 2: Activity trend opener ---
+    let trend = '';
+    if (s.actTrend) {
+      const t = s.actTrend;
+      if (t.deltaPct >= 20) trend = `Activity stepped up last week (${t.lastWk} vs ${t.avgWk} avg, +${t.deltaPct}%). Great momentum. `;
+      else if (t.deltaPct <= -20) trend = `Activity dipped last week (${t.lastWk} vs ${t.avgWk} avg, ${t.deltaPct}%). Worth checking what got in the way. `;
+      else trend = `Activity was steady last week (${t.lastWk} vs ${t.avgWk} avg). `;
+    }
+
+    // --- Layer 3: Pipeline maths ---
+    let pipeMaths = '';
+    if (s.zone !== 'exceeding' && s.zone !== 'ramping' && WR > 0) {
+      if (s.pipeGap > 0) {
+        pipeMaths = ` You need ${eurShort(s.pipeGap)} more pipeline across the remaining ${WR} weeks (roughly ${eurShort(s.pipeWeeklyNeeded)}/week).`;
+      } else {
+        pipeMaths = ` You've already cleared your pipeline target — excellent position.`;
+      }
+    }
+
+    // --- Layer 5: Weeks-in-zone escalation prefix ---
+    let escalation = '';
+    if (wiz >= 4 && ['activity','conversion','deal_size'].includes(s.zone)) {
+      escalation = `This is week ${wiz} in this zone. The pattern has persisted, so it's time to try something different from previous weeks. `;
+    } else if (wiz >= 2 && ['activity','conversion','deal_size'].includes(s.zone)) {
+      escalation = `Week ${wiz} in this zone. `;
+    }
+
+    // --- Layer 4: Rotating tactical tips (3 per zone, cycled by week number) ---
+    const tips = {
+      activity: {
+        early: [
+          `Try mapping out your 10am\u20132pm block the night before with a pre-built call list. Removing decision fatigue makes it easier to just start.`,
+          `Consider pairing up with a teammate for a power hour \u2014 making calls alongside someone else builds momentum and accountability.`,
+          `Pick your top five accounts and commit to calling each one this week. Starting small and focused builds the habit before scaling up.`
+        ],
+        mid: [
+          `Audit your calendar from the past week. How many hours were genuinely spent on outreach versus meetings, prep, and admin? Your manager can help reclaim lost time.`,
+          `Try blocking 90 minutes first thing in your prospecting window for calls only \u2014 no email, no Slack. Focused bursts often produce more than scattered effort across the day.`,
+          `Ask your manager to shadow a live call session with you this week. Real-time feedback during a calling block can unlock confidence faster than reviewing recordings after the fact.`
+        ],
+        late: [
+          `With ${WR} weeks left, every dial matters. Consider extending your calling window by 30 minutes each day this week and tracking the difference.`,
+          `Focus this week on your highest-intent accounts \u2014 companies that have shown interest or engagement. The fastest path to pipeline at this stage is working warm signals.`,
+          `Ask your manager to help you build a sprint plan for the remaining weeks. A clear, achievable daily target can make the gap feel manageable rather than overwhelming.`
+        ]
+      },
+      conversion: {
+        early: [
+          `Review your last five calls with your manager \u2014 are you reaching the right person, and is your opening resonating? Small tweaks early in the quarter compound over time.`,
+          `Think about where prospects go quiet or push back. A STRATEGIC framework walk-through with your manager can pinpoint exactly where to adjust.`,
+          `Try varying your opening approach this week. Test a different hook or lead with a different value angle and see if conversion shifts.`
+        ],
+        mid: [
+          `Consider doing a targeted call review session this week: pull three calls where you reached a decision maker but did not book. What patterns do you notice?`,
+          `Your activity is solid \u2014 the opportunity is in sharpening each conversation. Try preparing two tailored talking points per prospect before dialling rather than working from a generic script.`,
+          `Ask your manager or a top-performing peer to listen to a couple of your calls and give you specific feedback on your discovery questions. Fresh ears often spot things you have become blind to.`
+        ],
+        late: [
+          `With ${WR} weeks remaining, focus your effort on the highest-probability accounts. Review your pipeline with your manager and identify where a single good conversation could unlock a deal.`,
+          `Try recording yourself on your next three calls and listening back. Pay attention to pacing, questions, and whether you are giving the prospect space to talk. Self-review at this stage can surface quick wins.`,
+          `Consider whether your channel mix is optimised. If phone is not converting, a well-timed LinkedIn voice note or personalised video could be the pattern interrupt that breaks through.`
+        ]
+      },
+      deal_size: {
+        early: [
+          `Review the company size and employee count of your recent meetings. Are there larger accounts on your list that you have not reached yet? Discussing account prioritisation with your manager could shift the mix.`,
+          `Look at where your top-performing peers are booking meetings. What company size and seniority level are they targeting? Aligning your list to a similar profile could lift average deal value.`,
+          `Check the pipeline values on your recent SAOs. Are they realistic, or have you estimated conservatively? Under-forecasting is a common pattern. Ask your manager to benchmark your average deal size against the segment median and adjust where values look too low.`
+        ],
+        mid: [
+          `You are converting at a strong rate \u2013 the lever now is which accounts you are converting. Spend 30 minutes with your manager this week reviewing your target list and identifying five larger accounts to prioritise.`,
+          `Review the pipeline values you attached to your SAOs this quarter. If you have been conservative in your estimates, work with your manager or AE to re-forecast using historical close data for the segment. Accurate forecasting protects your attainment.`,
+          `Consider multi-threading into your existing opportunities. If you have booked a meeting with a mid-market company, is there a larger division or parent company where the same value proposition applies at greater scale?`
+        ],
+        late: [
+          `With ${WR} weeks left and strong SAO attainment, the fastest path to closing your pipeline gap is landing one or two larger deals. Focus your remaining effort on enterprise or upper mid-market accounts.`,
+          `Audit your recent SAOs with your manager: compare the values you forecasted against what similar deals in the segment have closed at. If your estimates are consistently below the median, the gap may be a forecasting issue rather than a targeting one. Correcting this now could close a significant portion of your pipeline gap.`,
+          `Consider asking your manager to connect you with an AE who works larger deals \u2013 understanding what a big opportunity looks like from the AE perspective can sharpen your targeting and qualification.`
+        ]
+      },
+      on_track: {
+        early: [
+          `Keep doing what is working. Think about what has been most effective so far so you can replicate it consistently. If anything is creating friction, flag it with your manager so they can help clear the path.`,
+          `You are in a strong position. Consider using some of your 1:1 time this week to discuss longer-term development goals rather than just the numbers \u2014 what skills do you want to build next?`,
+          `Solid start to the quarter. Is there a peer who could use some support? Sharing your approach with a teammate benefits everyone and sharpens your own thinking.`
+        ],
+        mid: [
+          `Strong trajectory. With ${WR} weeks remaining and ${eurShort(s.pipeGap)} to close, you are well placed. Keep the consistency going and think about what could accelerate you into Exceeding.`,
+          `You are tracking well. This is a good week to review your pipeline quality with your manager \u2014 are there any deals at risk of slipping that need attention before they go cold?`,
+          `Consistent performance. Think about whether there is a new skill or technique you want to test this week. When things are going well, it is the best time to experiment.`
+        ],
+        late: [
+          `Nearly there. ${eurShort(s.pipeGap)} gap across ${WR} weeks is very achievable. Maintain your rhythm and do not change what is working.`,
+          `Strong quarter. Start thinking about what you want to carry into next quarter \u2014 which accounts, which approaches, which habits. Building the bridge now saves time later.`,
+          `You are within striking distance of target. Keep your focus sharp this week and avoid the temptation to ease off. Finishing strong sets the tone for next quarter.`
+        ]
+      },
+      exceeding: {
+        early: [
+          `Brilliant start. Think about what has driven your success \u2014 your targeting, your messaging, your daily routine. Would you be open to sharing a quick best-practice session with the team?`,
+          `Outstanding performance. Discuss stretch goals with your manager this week and whether there are development opportunities (shadowing AEs, running a team training) that match your ambition.`,
+          `Exceptional quarter so far. Consider mentoring a teammate who is earlier in their journey. Teaching what you know is one of the fastest ways to solidify your own skills.`
+        ],
+        mid: [
+          `Delivering well above target. This is a great time to have a career development conversation with your manager \u2014 what is the next step for you and what do you need to get there?`,
+          `Your approach is clearly working. Think about documenting your process this week: which accounts, what sequence, what messaging. Creating a playbook of your method helps the team and gives you a tangible achievement for your development record.`,
+          `Superb consistency. With your targets covered, consider using some bandwidth to experiment with a new vertical, a new persona, or a new channel. Low-risk experimentation when you are ahead builds versatility.`
+        ],
+        late: [
+          `Exceptional quarter. Start thinking about next quarter now \u2014 what will you do differently, what will you carry forward? Discuss with your manager how this performance translates into your progression goals.`,
+          `Outstanding delivery. Use the final weeks to cement your approach and document what worked. This is the evidence you need for your next career conversation.`,
+          `Incredible work this quarter. Think about what stretch goal would be meaningful to you in the final ${WR} weeks. Finishing strong from an already-strong position is a real statement.`
+        ]
+      },
+      ramping: {
+        early: [
+          `Focus on getting comfortable with the value proposition and your call flow. Ask your manager for a practice call or role-play session to build confidence. Check in on your onboarding milestones.`,
+          `This stage is about building familiarity. Try listening to two or three calls from experienced SDRs on your team this week \u2014 notice their opening, their questions, and how they handle objections.`,
+          `Do not worry about the numbers yet. Focus on making your first calls, getting comfortable with the technology, and learning the ICP. Your manager can help you set realistic daily goals for this stage.`
+        ],
+        mid: [
+          `You are progressing through ramp. Review your onboarding checklist with your manager and identify any gaps. If you are comfortable on the phone, consider pushing for more volume this week to accelerate.`,
+          `Think about which parts of the role feel natural and which feel uncertain. Bring those to your 1:1 \u2014 your manager can tailor their coaching to the areas where you will benefit most.`,
+          `If you have not already, ask to shadow a top-performing SDR for an hour this week. Seeing how someone experienced structures their day and their calls can shortcut your learning curve significantly.`
+        ],
+        late: [
+          `Getting closer to full quota. Discuss with your manager how ready you feel and what support would help you transition confidently. The skills you have built during ramp are the foundation for everything ahead.`,
+          `Think about what has changed since your first week. You have built real skills \u2014 make sure you are recognising your own progress. Discuss accelerated progression with your manager if you feel ready.`,
+          `The ramp period is designed to set you up for sustained success. Use these final weeks to solidify your routine, your targeting, and your pitch. The stronger your foundation, the faster you will fly at full quota.`
+        ]
+      }
+    };
+
+    // Select tip: rotate by week number within the phase
+    function getTip(zone) {
+      const pool = tips[zone] && tips[zone][phase] ? tips[zone][phase] : null;
+      if (!pool || pool.length === 0) return '';
+      return pool[(WN - 1) % pool.length];
+    }
+
+    // --- Assemble signal and consider ---
+    let signal = '', consider = '';
+
+    // Signal: trend opener + zone-specific data summary + pipeline maths
+    if (s.zone === 'activity') {
+      if (s.saos === 0 && w < 100) {
+        signal = `${trend}${w} acts/wk with zero SAO. Volume is the first thing to unlock.${pipeMaths}`;
+      } else if (s.saos === 0) {
+        signal = `${trend}${w} acts/wk but no SAO yet. The effort is building — now it's about making it land in the right places.${pipeMaths}`;
+      } else if (s.saoPct >= 50) {
+        signal = `${trend}${w} acts/wk but converting at ${pct(s.saoPct)} SAO. You're skilled at converting when you engage — the opportunity is in more volume.${pipeMaths}`;
+      } else {
+        signal = `${trend}${w} acts/wk with ${pct(s.saoPct)} SAO. Building volume is the priority right now.${pipeMaths}`;
+      }
+    } else if (s.zone === 'conversion') {
+      if (w >= 500 && s.saoPct < 25) {
+        signal = `${trend}${w} acts/wk but only ${pct(s.saoPct)} SAO. Serious effort going in — the focus is on making every conversation count.${pipeMaths}`;
+      } else if (s.pipePct >= 50 && s.saoPct < 50) {
+        signal = `${trend}${w} acts/wk, ${pct(s.saoPct)} SAO but ${pct(s.pipePct)} pipeline. You're landing higher-value opportunities from fewer meetings.${pipeMaths}`;
+      } else {
+        signal = `${trend}${w} acts/wk with ${pct(s.saoPct)} SAO. The activity is there — the opportunity is in sharpening how conversations land.${pipeMaths}`;
+      }
+    } else if (s.zone === 'deal_size') {
+      signal = `${trend}${pct(s.saoPct)} SAO \u2013 you are converting well. Pipeline at ${pct(s.pipePct)} because average deal value (${eur(avgDeal)}) is below target. Worth checking whether this is an account-size issue, or whether values were forecast conservatively at SAO creation.${pipeMaths}`;
+    } else if (s.zone === 'on_track') {
+      signal = `${trend}${pct(s.pipePct)} pipeline, ${pct(s.saoPct)} SAO. Strong trajectory.${pipeMaths}`;
+    } else if (s.zone === 'exceeding') {
+      signal = `${trend}${pct(s.pipePct)} pipeline, ${pct(s.saoPct)} SAO, ${w} acts/wk. Outstanding quarter.`;
+    } else if (s.zone === 'ramping') {
+      if (s.saos === 0 && w < 150) {
+        signal = `${trend}Early ramp: ${w} acts/wk, no SAO yet. This is expected at this stage.`;
+      } else if (s.saos === 0) {
+        signal = `${trend}Ramping with ${w} acts/wk but no SAO yet. Activity is building well.`;
+      } else {
+        signal = `${trend}Ramping with ${s.saos} SAO and ${eurShort(s.pipe)} pipeline. Ahead of ramp milestones.`;
+      }
+    }
+
+    // Consider: escalation + rotating tactical tip
+    consider = `${escalation}${getTip(s.zone)}`;
+
+    return { signal, consider };
+  }
+
+  // Priority order for coaching urgency
+  const zonePriority = { activity: 0, conversion: 1, deal_size: 2, ramping: 3, on_track: 4, exceeding: 5 };
+  const groups = [
+    { zone: 'activity',   label: '🔴 Activity Gap',     desc: 'Building volume is the priority — more conversations create more opportunities', color: '#dc2626' },
+    { zone: 'conversion', label: '⚠️ Conversion Gap',    desc: 'The effort is there — sharpening targeting and messaging will unlock results', color: '#d97706' },
+    { zone: 'deal_size',  label: '⚠️ Deal Size Gap',     desc: 'Converting well \u2013 check whether the gap is account targeting, under-forecasted deal values, or both', color: '#d97706' },
+    { zone: 'ramping',    label: '🔵 Ramping',            desc: 'Building foundations — confidence and familiarity come with every conversation', color: '#2563eb' },
+    { zone: 'on_track',   label: '✅ On Track',           desc: 'Strong trajectory — keep the momentum going', color: '#65a30d' },
+    { zone: 'exceeding',  label: '🏆 Exceeding',          desc: 'Outstanding performance — your approach is making a real impact', color: '#16a34a' },
+  ];
+
+  let html = '<div class="coach-grid">';
+
+  groups.forEach(g => {
+    const sdrs = filtered.filter(s => s.zone === g.zone).sort((a, b) => (a.pipePct - b.pipePct));
+    if (sdrs.length === 0) return;
+
+    html += `<div class="coach-group-title" style="color:${g.color}"><span>${g.label} (${sdrs.length})</span><span style="font-weight:400;font-size:10px;color:#64748b;text-transform:none;letter-spacing:0"> — ${g.desc}</span></div>`;
+
+    sdrs.forEach(s => {
+      const cd = coachData(s);
+      const pillBg = zoneBg(s.zone);
+      const pillColor = zoneColor(s.zone);
+      const pillBorder = zoneBorder(s.zone);
+      const wizLabel = s.weeksInZone > 1 ? `<span style="font-size:9px;color:#94a3b8;margin-top:2px">Week ${s.weeksInZone} in zone</span>` : '';
+      html += `<div class="coach-card" style="border-left:3px solid ${g.color}">
+        <div class="coach-card-name">
+          <span>${s.name}</span>
+          <span class="coach-zone-pill" style="background:${pillBg};color:${pillColor};border:1px solid ${pillBorder}">${zoneLabel(s.zone)}</span>
+          ${wizLabel}
+        </div>
+        <div class="coach-card-signal"><div class="probe-label">Data signal</div>${cd.signal}</div>
+        <div class="coach-card-probe"><div class="probe-label">Things to consider</div>${cd.consider}</div>
+      </div>`;
+    });
+  });
+
+  html += '</div>';
+  box.innerHTML = html;
+}
+
+// ============================================================
+// TREND CHARTS
+// ============================================================
+let currentTrendFilter = 'GLOBAL';
+let currentTrendSDR = '';
+
+function populateTrendSDRSelect() {
+  const sel = document.getElementById('trendSDRSelect');
+  sel.innerHTML = '';
+  if (currentTrendFilter === 'GLOBAL') {
+    sel.innerHTML = '<option value="">Select Business Unit or Region first</option>';
+    sel.style.color = '#94a3b8';
+    currentTrendSDR = '';
+    return;
+  }
+  // Find SDRs matching current filter
+  const matches = SDRS.filter(s => {
+    if (currentTrendFilter.startsWith('R_')) return s.region === currentTrendFilter.slice(2);
+    return s.bu === currentTrendFilter;
+  }).sort((a, b) => b.pipe - a.pipe);
+
+  sel.style.color = '#334155';
+  sel.innerHTML = '<option value="">All (team view)</option>';
+  matches.forEach(s => {
+    const opt = document.createElement('option');
+    opt.value = s.name;
+    opt.textContent = s.name;
+    sel.appendChild(opt);
+  });
+}
+
+// Compute 13-week cumulative target curve for a given filter
+function computeTargetCurve(filter, metric) {
+  // Determine which SDRs belong to this filter
+  const sdrs = Object.entries(SDR_ROSTER).filter(([name, r]) => {
+    if (filter.startsWith('SDR:')) return name === filter.slice(4);
+    if (filter === 'GLOBAL') return true;
+    if (filter.startsWith('R_')) { return r.region === filter.slice(2); }
+    return r.bu === filter;
+  }).map(([name]) => name);
+
+  const table = metric === 'pipe' ? MONTHLY_PIPE_TARGETS : MONTHLY_SAO_TARGETS;
+  const useSaoDay = metric === 'saos';
+
+  return WEEKS_DEF.map(w => {
+    const d = new Date(w.ending + 'T00:00:00');
+    const month = d.getMonth(), day = d.getDate();
+    const dims = [31, 28, 31], dim = dims[month];
+    const useDay = useSaoDay ? Math.min(day + 2, dim) : day;
+
+    let total = 0;
+    sdrs.forEach(name => {
+      const t = table[name] || { jan:0, feb:0, mar:0 };
+      if (month === 0)      total += Math.round((useDay / dim) * t.jan);
+      else if (month === 1) total += Math.round(t.jan + (useDay / dim) * t.feb);
+      else                  total += Math.round(t.jan + t.feb + (useDay / dim) * t.mar);
+    });
+    return total;
+  });
+}
+
+// Extract actuals from WEEK_HISTORY for a given filter
+function getActualsCurve(filter, metric) {
+  // SDR individual mode: use real weekly history for pipeline, linear for SAOs
+  if (filter.startsWith('SDR:')) {
+    const sdrName = filter.slice(4);
+    const sdr = SDRS.find(s => s.name === sdrName);
+    if (!sdr) return WEEK_HISTORY.map(() => 0);
+    const cumVal = metric === 'pipe' ? sdr.pipe : sdr.saos;
+
+    // Real weekly pipeline data available
+    if (metric === 'pipe' && SDR_WEEK_HISTORY[sdrName]) {
+      const weekly = SDR_WEEK_HISTORY[sdrName];
+      const rawCum = []; let running = 0;
+      for (let i = 0; i < weekly.length; i++) { running += weekly[i]; rawCum.push(running); }
+      // Scale proportionally so endpoint matches authoritative SDRS cumulative
+      const rawTotal = rawCum[rawCum.length - 1];
+      if (rawTotal > 0) {
+        const scale = cumVal / rawTotal;
+        return rawCum.map(v => Math.round(v * scale));
+      }
+    }
+
+    // Fallback: linear interpolation (SAOs or zero-pipe SDRs)
+    const nWeeks = WEEK_HISTORY.length;
+    return WEEK_HISTORY.map((_, i) => Math.round(cumVal * ((i + 1) / nWeeks)));
+  }
+
+  const bus = ['EMEA_OB','DACH_ENT_OB','DACH_CORP_OB','AMER_OB','APJ_OB','INBOUND'];
+  const regionMap = {
+    R_DACH: (w) => (w.DACH_ENT_OB||{})[metric] + (w.DACH_CORP_OB||{})[metric] + (w.IB_DACH||{})[metric],
+    R_EMEA: (w) => (w.EMEA_OB||{})[metric] + (w.IB_EMEA||{})[metric],
+    R_AMER: (w) => (w.AMER_OB||{})[metric],
+    R_APJ:  (w) => (w.APJ_OB||{})[metric],
+  };
+
+  return WEEK_HISTORY.map(w => {
+    if (filter === 'GLOBAL') {
+      return bus.reduce((s, bu) => s + ((w[bu]||{})[metric]||0), 0);
+    }
+    if (regionMap[filter]) return regionMap[filter](w) || 0;
+    return ((w[filter]||{})[metric]) || 0;
+  });
+}
+
+// Render a single trend line chart
+function renderTrendChart(canvasId, targets, actuals, isEuro, titleId, label, proj) {
+  const chartLabel = isEuro ? 'Pipeline' : 'SAO';
+  document.getElementById(titleId).textContent = chartLabel + ' Trend — ' + label;
+
+  const canvas = document.getElementById(canvasId);
+  const dpr = window.devicePixelRatio || 1;
+  const rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr; canvas.height = rect.height * dpr;
+  canvas.style.width = rect.width + 'px'; canvas.style.height = rect.height + 'px';
+  const ctx = canvas.getContext('2d'); ctx.scale(dpr, dpr);
+
+  const W = rect.width, H = rect.height;
+  const pL = isEuro ? 80 : 50, pR = 75, pT = 20, pB = 50;
+  const pW = W - pL - pR, pH = H - pT - pB;
+
+  // maxVal must include projection endpoints so they don't clip
+  let allVals = [...(targets || [0]), ...actuals];
+  if (proj) allVals.push(...proj.bestCase, ...proj.conservative, ...proj.expected);
+  const maxVal = Math.max(...allVals) * 1.15 || 1;
+  const numWeeks = 13;
+  const xStep = pW / (numWeeks - 1);
+
+  // Grid lines
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 0.5;
+  const gridSteps = 5;
+  for (let i = 0; i <= gridSteps; i++) {
+    const y = pT + pH - (i / gridSteps) * pH;
+    ctx.beginPath(); ctx.moveTo(pL, y); ctx.lineTo(pL + pW, y); ctx.stroke();
+    ctx.fillStyle = '#94a3b8'; ctx.font = "500 9px 'DM Sans'"; ctx.textAlign = 'right';
+    const val = (maxVal / gridSteps) * i;
+    ctx.fillText(isEuro ? '€' + (val >= 1000000 ? (val / 1000000).toFixed(1) + 'M' : Math.round(val / 1000) + 'k') : Math.round(val), pL - 8, y + 3);
+  }
+
+  // Month dividers
+  const monthWeeks = [{ label:'January', start:0, end:3 }, { label:'February', start:4, end:7 }, { label:'March', start:8, end:12 }];
+  monthWeeks.forEach(m => {
+    if (m.start > 0) {
+      const mx = pL + (m.start - 0.5) * xStep;
+      ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(mx, pT); ctx.lineTo(mx, pT + pH); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    const midX = pL + ((m.start + m.end) / 2) * xStep;
+    ctx.fillStyle = '#94a3b8'; ctx.font = "600 10px 'DM Sans'"; ctx.textAlign = 'center';
+    ctx.fillText(m.label, midX, pT + pH + 38);
+  });
+
+  // X axis labels (week numbers)
+  for (let i = 0; i < numWeeks; i++) {
+    const x = pL + i * xStep;
+    ctx.fillStyle = '#94a3b8'; ctx.font = "500 9px 'DM Sans'"; ctx.textAlign = 'center';
+    ctx.fillText('W' + (i + 1), x, pT + pH + 16);
+  }
+
+  // Target curve (dashed) — only if targets provided
+  if (targets) {
+  ctx.strokeStyle = '#0F4C81'; ctx.lineWidth = 2; ctx.setLineDash([6, 4]); ctx.globalAlpha = 0.5;
+  ctx.beginPath();
+  targets.forEach((v, i) => {
+    const x = pL + i * xStep, y = pT + pH - (v / maxVal) * pH;
+    i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+  });
+  ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+
+  // Target end-point label
+  const lastTarget = targets[targets.length - 1];
+  const ltX = pL + (numWeeks - 1) * xStep, ltY = pT + pH - (lastTarget / maxVal) * pH;
+  ctx.fillStyle = '#0F4C81'; ctx.font = "bold 9px 'DM Sans'"; ctx.textAlign = 'right';
+  ctx.fillText(isEuro ? '€' + (lastTarget >= 1000000 ? (lastTarget / 1000000).toFixed(1) + 'M' : Math.round(lastTarget / 1000) + 'k') : lastTarget, ltX - 4, ltY - 6);
+  }
+
+  // Actuals line (solid) — only up to weeks with data
+  const hasData = actuals.filter(v => v > 0).length;
+  if (hasData > 0) {
+    // Fill area under actuals
+    ctx.fillStyle = 'rgba(22, 163, 74, 0.06)';
+    ctx.beginPath();
+    ctx.moveTo(pL, pT + pH);
+    actuals.forEach((v, i) => {
+      if (i >= WEEK_HISTORY.length) return;
+      const x = pL + i * xStep, y = pT + pH - (v / maxVal) * pH;
+      ctx.lineTo(x, y);
+    });
+    ctx.lineTo(pL + (WEEK_HISTORY.length - 1) * xStep, pT + pH);
+    ctx.closePath(); ctx.fill();
+
+    // Line
+    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    actuals.forEach((v, i) => {
+      if (i >= WEEK_HISTORY.length) return;
+      const x = pL + i * xStep, y = pT + pH - (v / maxVal) * pH;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Dots
+    actuals.forEach((v, i) => {
+      if (i >= WEEK_HISTORY.length) return;
+      const x = pL + i * xStep, y = pT + pH - (v / maxVal) * pH;
+      ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(x, y, 3, 0, Math.PI * 2); ctx.fill();
+    });
+
+    // Latest value label — positioned below-left with leader line to stay clear of projections
+    const lastIdx = WEEK_HISTORY.length - 1;
+    const lastVal = actuals[lastIdx];
+    const lx = pL + lastIdx * xStep, ly = pT + pH - (lastVal / maxVal) * pH;
+
+    // Label anchor: offset down and left
+    const labelX = lx - 60;
+    const labelY = ly + 40;
+
+    // Leader line from dot to label area
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 0.8; ctx.setLineDash([2, 2]);
+    ctx.beginPath(); ctx.moveTo(lx, ly + 5); ctx.lineTo(labelX + 52, labelY - 12); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Value
+    ctx.fillStyle = '#16a34a'; ctx.font = "bold 11px 'DM Sans'"; ctx.textAlign = 'right';
+    ctx.fillText(isEuro ? '€' + (lastVal >= 1000000 ? (lastVal / 1000000).toFixed(1) + 'M' : Math.round(lastVal / 1000) + 'k') : lastVal, labelX + 54, labelY - 2);
+
+    // Attainment badge
+    if (targets) {
+    const targetAtWeek = targets[lastIdx] || 1;
+    const pct = Math.round((lastVal / targetAtWeek) * 100);
+    ctx.fillStyle = pct >= 90 ? '#16a34a' : pct >= 70 ? '#d97706' : '#dc2626';
+    ctx.font = "bold 9px 'DM Sans'"; ctx.textAlign = 'right';
+    ctx.fillText(pct + '% of target', labelX + 54, labelY + 10);
+    }
+  }
+
+  // ── PROJECTION LINES (from last actual to W13) ──
+  if (proj && WEEK_HISTORY.length >= 2) {
+    const startIdx = proj.startWeek; // 0-indexed week where projections begin
+    const startX = pL + (startIdx - 1) * xStep; // last actuals point
+    const startY = pT + pH - (actuals[startIdx - 1] / maxVal) * pH;
+
+    function drawProjection(data, color, dashPattern) {
+      ctx.strokeStyle = color; ctx.lineWidth = 1.8; ctx.setLineDash(dashPattern); ctx.globalAlpha = 0.7;
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      data.forEach((v, i) => {
+        const x = pL + (startIdx + i) * xStep;
+        const y = pT + pH - (v / maxVal) * pH;
+        ctx.lineTo(x, y);
+      });
+      ctx.stroke();
+      ctx.setLineDash([]); ctx.globalAlpha = 1;
+    }
+
+    // Draw in order: conservative (bottom), expected (middle), best case (top)
+    // Collect endpoint positions first for de-collision
+    const projLines = [
+      { data: proj.conservative, color: '#dc2626', dash: [4, 4], label: 'Worst' },
+      { data: proj.expected,     color: '#2563eb', dash: [6, 3], label: 'Upside' },
+      { data: proj.bestCase,     color: '#16a34a', dash: [3, 3], label: 'Best' },
+    ];
+
+    // Draw the lines
+    projLines.forEach(p => drawProjection(p.data, p.color, p.dash));
+
+    // Draw endpoint labels with vertical de-collision
+    const endX = pL + (numWeeks - 1) * xStep;
+    const labelPositions = projLines.map(p => {
+      const lastV = p.data[p.data.length - 1];
+      const rawY = pT + pH - (lastV / maxVal) * pH;
+      const valLabel = isEuro ? '€' + (lastV >= 1000000 ? (lastV/1000000).toFixed(1)+'M' : Math.round(lastV/1000)+'k') : lastV;
+      return { y: rawY, color: p.color, label: valLabel };
+    }).sort((a, b) => a.y - b.y); // sort by Y (top to bottom)
+
+    // Push labels apart if within 12px of each other
+    const minGap = 12;
+    for (let i = 1; i < labelPositions.length; i++) {
+      if (labelPositions[i].y - labelPositions[i-1].y < minGap) {
+        labelPositions[i].y = labelPositions[i-1].y + minGap;
+      }
+    }
+
+    labelPositions.forEach(lp => {
+      ctx.fillStyle = lp.color; ctx.font = "bold 9px 'DM Sans'"; ctx.textAlign = 'left';
+      ctx.fillText(lp.label, endX + 6, lp.y + 3);
+    });
+
+    // Shaded cone between conservative and best case
+    ctx.fillStyle = 'rgba(37, 99, 235, 0.04)';
+    ctx.beginPath();
+    ctx.moveTo(startX, startY);
+    // Top edge (best case)
+    proj.bestCase.forEach((v, i) => {
+      ctx.lineTo(pL + (startIdx + i) * xStep, pT + pH - (v / maxVal) * pH);
+    });
+    // Bottom edge (conservative, reversed)
+    for (let i = proj.conservative.length - 1; i >= 0; i--) {
+      ctx.lineTo(pL + (startIdx + i) * xStep, pT + pH - (proj.conservative[i] / maxVal) * pH);
+    }
+    ctx.closePath(); ctx.fill();
+  }
+
+  // Legend
+  const legY = pT - 6;
+  let legendOffset = pL;
+  if (targets) {
+  ctx.setLineDash([6, 4]); ctx.strokeStyle = '#0F4C81'; ctx.lineWidth = 2; ctx.globalAlpha = 0.5;
+  ctx.beginPath(); ctx.moveTo(legendOffset, legY); ctx.lineTo(legendOffset + 30, legY); ctx.stroke();
+  ctx.setLineDash([]); ctx.globalAlpha = 1;
+  ctx.fillStyle = '#64748b'; ctx.font = "500 10px 'DM Sans'"; ctx.textAlign = 'left';
+  ctx.fillText('Target', legendOffset + 34, legY + 3);
+  legendOffset += 85;
+  }
+
+  ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 2.5;
+  ctx.beginPath(); ctx.moveTo(legendOffset, legY); ctx.lineTo(legendOffset + 30, legY); ctx.stroke();
+  ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.arc(legendOffset + 15, legY, 3, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#64748b'; ctx.font = "500 10px 'DM Sans'";
+  ctx.fillText('Actual', legendOffset + 34, legY + 3);
+  legendOffset += 80;
+
+  if (proj) {
+    // Best case legend
+    ctx.strokeStyle = '#16a34a'; ctx.lineWidth = 1.8; ctx.setLineDash([3, 3]); ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.moveTo(legendOffset, legY); ctx.lineTo(legendOffset + 25, legY); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#64748b'; ctx.font = "500 10px 'DM Sans'";
+    ctx.fillText('Best', legendOffset + 29, legY + 3);
+    legendOffset += 62;
+
+    // Expected legend
+    ctx.strokeStyle = '#2563eb'; ctx.lineWidth = 1.8; ctx.setLineDash([6, 3]); ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.moveTo(legendOffset, legY); ctx.lineTo(legendOffset + 25, legY); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#64748b'; ctx.font = "500 10px 'DM Sans'";
+    ctx.fillText('Upside', legendOffset + 29, legY + 3);
+    legendOffset += 72;
+
+    // Conservative legend
+    ctx.strokeStyle = '#dc2626'; ctx.lineWidth = 1.8; ctx.setLineDash([4, 4]); ctx.globalAlpha = 0.7;
+    ctx.beginPath(); ctx.moveTo(legendOffset, legY); ctx.lineTo(legendOffset + 25, legY); ctx.stroke();
+    ctx.setLineDash([]); ctx.globalAlpha = 1;
+    ctx.fillStyle = '#64748b'; ctx.font = "500 10px 'DM Sans'";
+    ctx.fillText('Worst', legendOffset + 29, legY + 3);
+  }
+
+  // X axis line
+  ctx.strokeStyle = '#e2e8f0'; ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(pL, pT + pH); ctx.lineTo(pL + pW, pT + pH); ctx.stroke();
+}
+
+// Filter label mapping
+const TREND_LABELS = {
+  GLOBAL: 'Global', EMEA_OB: 'EMEA Outbound', DACH_ENT_OB: 'DACH Enterprise Outbound',
+  DACH_CORP_OB: 'DACH Corporate Outbound', AMER_OB: 'AMER Outbound', APJ_OB: 'APJ Outbound',
+  INBOUND: 'Inbound', R_DACH: 'DACH (Allbound)', R_EMEA: 'EMEA (Allbound)',
+  R_AMER: 'AMER (Allbound)', R_APJ: 'APJ (Allbound)'
+};
+
+function computeProjections(actuals, targets) {
+  const nData = WEEK_HISTORY.length;
+  if (nData < 2) return null;
+  const lastVal = actuals[nData - 1];
+  const totalWeeks = 13;
+  const remaining = totalWeeks - nData;
+  if (remaining <= 0) return null;
+
+  // Weekly increments
+  const increments = [];
+  for (let i = 0; i < nData; i++) {
+    increments.push(i === 0 ? actuals[0] : actuals[i] - actuals[i - 1]);
+  }
+
+  // Recency-weighted average: weight = position (1, 2, 3, ...)
+  let wSum = 0, wDiv = 0;
+  increments.forEach((inc, i) => {
+    const w = i + 1;
+    wSum += inc * w;
+    wDiv += w;
+  });
+  const weightedWeekly = wDiv > 0 ? wSum / wDiv : 0;
+
+  // Best case: weekly rate needed to hit Q1 target at W13
+  const q1Target = targets ? targets[totalWeeks - 1] : 0;
+  const bestWeekly = remaining > 0 ? (q1Target - lastVal) / remaining : 0;
+
+  // Conservative (worst case): recency-weighted rate, flat
+  const conservativeWeekly = weightedWeekly;
+
+  // Expected (upside): midpoint between conservative and best case
+  const expectedWeekly = (conservativeWeekly + bestWeekly) / 2;
+
+  // Build cumulative projection arrays (starting from last actual)
+  const conservative = [], expected = [], bestCase = [];
+  for (let w = 0; w < remaining; w++) {
+    conservative.push(Math.round(lastVal + conservativeWeekly * (w + 1)));
+    expected.push(Math.round(lastVal + expectedWeekly * (w + 1)));
+    bestCase.push(Math.round(lastVal + bestWeekly * (w + 1)));
+  }
+
+  // Sort by W13 endpoint so labels always match visual position:
+  // highest = best, middle = upside, lowest = worst
+  const scenarios = [
+    { data: conservative, weekly: Math.round(conservativeWeekly) },
+    { data: expected, weekly: Math.round(expectedWeekly) },
+    { data: bestCase, weekly: Math.round(bestWeekly) },
+  ].sort((a, b) => a.data[a.data.length - 1] - b.data[b.data.length - 1]);
+
+  return {
+    startWeek: nData,
+    conservative: scenarios[0].data,  // lowest = worst case
+    expected: scenarios[1].data,       // middle = upside
+    bestCase: scenarios[2].data,       // highest = best case
+    conservativeWeekly: scenarios[0].weekly,
+    expectedWeekly: scenarios[1].weekly,
+    bestWeekly: scenarios[2].weekly,
+    q1Target: Math.round(q1Target),
+    remaining,
+    weightedWeekly: Math.round(conservativeWeekly),
+    requiredWeekly: Math.round(bestWeekly)
+  };
+}
+
+function renderTrendCallout(filter) {
+  const box = document.getElementById('trendCallout');
+  const pipeTargets = computeTargetCurve(filter, 'pipe');
+  const pipeActuals = getActualsCurve(filter, 'pipe');
+  const saoTargets = computeTargetCurve(filter, 'saos');
+  const saoActuals = getActualsCurve(filter, 'saos');
+  const pipeProj = computeProjections(pipeActuals, pipeTargets);
+  const saoProj = computeProjections(saoActuals, saoTargets);
+  if (!pipeProj || !saoProj) { box.innerHTML = ''; return; }
+
+  const label = TREND_LABELS[filter] || filter;
+  const weeksLeft = pipeProj.remaining;
+  const nData = WEEK_HISTORY.length;
+  const lastPipe = pipeActuals[nData - 1];
+  const lastSao = saoActuals[nData - 1];
+  const pipeGap = Math.max(0, pipeProj.q1Target - lastPipe);
+  const saoGap = Math.max(0, saoProj.q1Target - lastSao);
+
+  // Current weighted weekly rates for context
+  const pipeCurrentWk = pipeProj.weightedWeekly;
+  const saoCurrentWk = saoProj.weightedWeekly;
+  const pipeReqWk = pipeProj.requiredWeekly;
+  const saoReqWk = saoProj.requiredWeekly;
+  const pipeRatio = pipeCurrentWk > 0 ? (pipeReqWk / pipeCurrentWk * 100) : 0;
+  const saoRatio = saoCurrentWk > 0 ? (saoReqWk / saoCurrentWk * 100) : 0;
+
+  box.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px">
+        <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Pipeline Required / Week</div>
+        <div style="font-size:22px;font-weight:800;color:#0F4C81">€${pipeReqWk >= 1000000 ? (pipeReqWk/1000000).toFixed(1)+'M' : Math.round(pipeReqWk/1000)+'k'}<span style="font-size:12px;font-weight:500;color:#64748b"> / week for ${weeksLeft} weeks</span></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">Current weighted pace: €${pipeCurrentWk >= 1000000 ? (pipeCurrentWk/1000000).toFixed(1)+'M' : Math.round(pipeCurrentWk/1000)+'k'}/wk · Need <span style="color:${pipeRatio <= 110 ? '#16a34a' : pipeRatio <= 140 ? '#d97706' : '#dc2626'};font-weight:600">${Math.round(pipeRatio)}%</span> of current pace</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">Gap: €${pipeGap >= 1000000 ? (pipeGap/1000000).toFixed(1)+'M' : Math.round(pipeGap/1000)+'k'} to Q1 target of €${pipeProj.q1Target >= 1000000 ? (pipeProj.q1Target/1000000).toFixed(1)+'M' : Math.round(pipeProj.q1Target/1000)+'k'}</div>
+      </div>
+      <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:14px 18px">
+        <div style="font-size:10px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">SAOs Required / Week</div>
+        <div style="font-size:22px;font-weight:800;color:#0F4C81">${saoReqWk}<span style="font-size:12px;font-weight:500;color:#64748b"> / week for ${weeksLeft} weeks</span></div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:4px">Current weighted pace: ${saoCurrentWk}/wk · Need <span style="color:${saoRatio <= 110 ? '#16a34a' : saoRatio <= 140 ? '#d97706' : '#dc2626'};font-weight:600">${Math.round(saoRatio)}%</span> of current pace</div>
+        <div style="font-size:10px;color:#94a3b8;margin-top:2px">Gap: ${saoGap} to Q1 target of ${saoProj.q1Target}</div>
+      </div>
+    </div>`;
+}
+
+function renderTrends() {
+  const f = currentTrendSDR ? 'SDR:' + currentTrendSDR : currentTrendFilter;
+  const label = currentTrendSDR ? currentTrendSDR : (TREND_LABELS[f] || f);
+  const pipeTargets = computeTargetCurve(f, 'pipe');
+  const pipeActuals = getActualsCurve(f, 'pipe');
+  const saoTargets = computeTargetCurve(f, 'saos');
+  const saoActuals = getActualsCurve(f, 'saos');
+  const pipeProj = computeProjections(pipeActuals, pipeTargets);
+  const saoProj = computeProjections(saoActuals, saoTargets);
+  renderTrendCallout(f);
+  renderTrendChart('trendPipeCanvas', pipeTargets, pipeActuals, true, 'trendPipeTitle', label, pipeProj);
+  renderTrendChart('trendSaoCanvas', saoTargets, saoActuals, false, 'trendSaoTitle', label, saoProj);
+}
+
+// Trend filter handler
+document.getElementById('trendFilterBar').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn'); if (!btn || !btn.dataset.tf) return;
+  document.querySelectorAll('#trendFilterBar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  currentTrendFilter = btn.dataset.tf;
+  currentTrendSDR = '';
+  populateTrendSDRSelect();
+  renderTrends();
+});
+
+document.getElementById('trendSDRSelect').addEventListener('change', e => {
+  currentTrendSDR = e.target.value;
+  renderTrends();
+});
+
+// ============================================================
+// FILTERS
+// ============================================================
+document.getElementById('filterBar').addEventListener('click', e => {
+  const btn = e.target.closest('.filter-btn'); if (!btn) return;
+  document.querySelectorAll('#filterBar .filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  if (btn.dataset.bu) { currentBU = btn.dataset.bu; currentRegion = null; }
+  if (btn.dataset.region) { currentBU = null; currentRegion = btn.dataset.region; }
+  renderTable();
+  renderAnalysis();
+  renderCoaching();
+});
+
+// ============================================================
+// RENDER ALL
+// ============================================================
+// Tab navigation
+document.querySelector('.tab-bar').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn'); if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+  // Re-render charts when switching to Summary (hidden canvases need redraw)
+  if (btn.dataset.tab === 'summary') { renderBell(); renderSaoDist(); renderPipeDist(); }
+  if (btn.dataset.tab === 'trends') { renderTrends(); }
+});
+
+function renderAll() {
+  renderGlobalKPIs();
+  renderWoW();
+  renderHighlights();
+  renderBU();
+  renderRegions();
+  renderZones();
+  renderBell();
+  renderSaoDist();
+  renderPipeDist();
+  renderTable();
+  renderAnalysis();
+  renderCoaching();
+}
+renderAll();
+window.addEventListener('resize', () => { renderBell(); renderSaoDist(); renderPipeDist(); if (document.getElementById('tab-trends').classList.contains('active')) renderTrends(); });
+</script>
+</body>
+</html>
